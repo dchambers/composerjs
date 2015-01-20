@@ -27,6 +27,8 @@ model.addHandler([p('value1'), p('value2')], [p('sum')], function(in, out) {
 });
 ```
 
+The `p()` method here is used to refer to one of the handler nodes properties.
+
 Since composable models are useful precisely because they increase re-usabilty, it will often be the case that the property names used within the model don't correlate with the names used by the handler, in which case the `as()` method can be used for translation, for example:
 
 
