@@ -8,6 +8,7 @@ ComposerJs models have the following facets:
   * The shape of the model is described up-front, but is then locked-in during use.
   * Sub-sections of the model can be observed, so that change can be detected, and so that dependent properties can be recalculated.
   * Model updates are atomic in nature, and all reactive property recalculation occurs as part of a single external update.
+  * No subscription management code is needed as the number of nodes within the model changes.
 
 
 ## Basic Usage
