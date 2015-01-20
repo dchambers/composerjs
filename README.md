@@ -1,6 +1,3 @@
-ComposerJs: The composable modelling library
-
-
 # Introduction
 
 ComposerJs allows you to compose models using a number of co-operating _handlers_, where each _handler_ is responsible for defining a number of _properties_ within the model, potentially using other _properties_ as input. This is useful if you need to repeatedly create models with overlapping, but differing functionality.
