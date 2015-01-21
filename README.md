@@ -2,7 +2,7 @@
 
 ComposerJs allows you to compose models using a number of co-operating _handlers_, where each _handler_ is responsible for defining a number of _properties_ within the model, potentially using other _properties_ as input. This is useful if you need to repeatedly create models with overlapping, but differing functionality.
 
-ComposerJs models have the following facets:
+ComposerJs models have the following attributes:
 
   * The models can have an arbitrary tree structure that can be used to model any domain problems.
   * The shape of the model is described up-front, but is then locked-in during use.
@@ -16,28 +16,49 @@ ComposerJs models have the following facets:
 You can create a model as follows:
 
 ```js
-var model = require('composerjs').create();
+var composerjs = require('composerjs');
+var model = composerjs.create();
 ```
 
 after which you can add handlers to the model, such as the following summation handler:
 
 ```js
+var p = composerjs.p;
 model.addHandler([p('value1'), p('value2')], [p('sum')], function(in, out) {
 	out.sum = in.value1 + in.value2;
 });
 ```
 
-The `p()` method here is used to refer to one of the handler nodes properties.
+Here, `p()` denotes _property_, and is used to indicate the set of _input-properties_ (the first argument) and the set of _output-properties_ (the second argument) to be used by the handler.
 
-Since composable models are useful precisely because they increase re-usabilty, it will often be the case that the property names used within the model don't correlate with the names used by the handler, in which case the `as()` method can be used for translation, for example:
+Since composable models are useful precisely because they increase re-usabilty, it will often be the case that the property names used within the model don't correlate with the names used by the handler, in which case the `as()` method can be used for translation.
 
+For example, if our summation handler is defined like this:
 
 ```js
 function summationHandler(in, out) {
 	out.sum = in.x + in.y;
 }
+summationHandler.inputs = [p('x'), p('y')];
+summationHandler.outputs = [p('sum')];
+```
 
-model.addHandler([p('value1').as('x'), p('value2').as('y')], [p('sum')], summationHandler);
+then we might make use of this handler as follows:
+
+```js
+model.addHandler([p('value1').as('x'), p('value2').as('y')], summationHandler.outputs, summationHandler);
+```
+
+In the case where we are happy to use the same names in the model as used by the handler we could write:
+
+```js
+model.addHandler(summationHandler.inputs, summationHandler.outputs, summationHandler);
+```
+
+or more simply:
+
+```js
+model.addHandler(summationHandler);
 ```
 
 ## Sealing The Model
@@ -81,68 +102,6 @@ model.p('sum').allowMultiplexing();
 ```
 
 
-## Tree Shaped Models
-
-Tree shaped models can be created using the `addNode()` and `addNodeList()` methods. The `addNode()` method allows a single sub-node to be added to an existing model node, for example:
-
-```js
-model.addNode('node');
-```
-
-This causes the new model node to be immediately accessible on `model` as `model.node`, allowing handlers to create or depend on the properties of the sub-node, for example:
-
-```js
-model.node.addHandler([model.p('value1'), model.p('value2')], [p('product')], function(in, out) {
-	out.product = in.value1 * in.value2;
-});
-```
-
-Notice here how _input-properties_ can optionally be fully-qualified, allowing properties from remote parts of the model to be listened to. This is only possible for input properties, and output properties are always relative to the node on which the handler is being registered.
-
-
-## Repeated Tree Elements
-
-Quite often, models have multiple nodes with exactly the same shape, but where the number of nodes can vary over the lifetime of the model. When this is the case, the `createNodeList()` method can be used, for example:
-
-
-```js
-model.createList('nodes');
-model.nodes.addHandler([], [p('name')], function(in, out) {
-	out.name = 'node #' + (in.index + 1);
-});
-```
-
-Notice here how the node-list handler is provided an implicit `in.index` property that it can optionally make use of, but otherwise exactly the same handlers used for nodes can also be used node-lists.
-
-Also, if you ever need different handlers to provide properties based on the number of nodes within a list, or depending on the index of the item in the list, the `allowMultiplexing()` method will again come to the rescue.
-
-Node-lists have four useful methods that can be used both before and after `seal()` has been invoked:
-
-  * `length()` (the number of nodes within the node-list)
-  * `item(index)` (retrieve the node at the given `index`)
-  * `addNode(index)` (add a node, optionally at a given `index`)
-  * `removeNode(index)` (remove the node at the given `index`)
-
-For example, we can retrieve the `name` property of the first item within the `nodes` node-list as follows:
-
-```js
-model.nodes.item(0).get('name')
-```
-
-Unlike normal nodes however, nodes within node-lists don't have a `p()` method, so as to prevent nodes that may or may not exist being used as _input-properties_, avoiding the need for complex, error-prone subscription management code. For example, the following code will cause an error:
-
-```js
-model.nodes.item(0).p('name'); // this will cause an error
-```
-
-Instead, it's possible to listen to all instance of a given property within a node-list, in which case the array of values from all nodes will be retrieved, for example:
-
-```js
-model.addHandler([model.nodes.p('name')], [p('allNames')], function(in, out) {
-	out.allNames = in.names.join(', ');
-});
-```
-
 ## External Model Usage
 
 The current value of a property within the model can be retrieved using the `get()` method, for example:
@@ -157,7 +116,7 @@ and, conversely, can be set using the `set()` method, as follows:
 model.set('answer', 42);
 ```
 
-and model observation can be done using the emitter pattern, for example:
+and model observation is supported using the emitter pattern, for example:
 
 ```js
 model.p('answer').on('change', function(value) {
@@ -166,9 +125,117 @@ model.p('answer').on('change', function(value) {
 ```
 
 
+## Tree Shaped Models
+
+Tree shaped models can be created using the `addNode()` and `addNodeList()` methods. The `addNode()` method allows a single sub-node to be added to an existing model node, for example:
+
+```js
+model.addNode('node');
+```
+
+which causes the new model node to be immediately accessible as `model.node`, allowing handlers to create or depend on the properties of the sub-node, for example:
+
+```js
+model.node.addHandler([model.p('value1'), model.p('value2')], [p('product')], function(in, out) {
+	out.product = in.value1 * in.value2;
+});
+```
+
+Notice here how the properties can optionally be fully-qualified, allowing properties from remote parts of the model to be listened to or updated.
+
+
+## Repeated Tree Elements
+
+Quite often, models have multiple nodes with exactly the same shape, but where the number of nodes can vary over the lifetime of the model. When this is the case, the `createNodeList()` method can be used, for example:
+
+
+```js
+model.createNodeList('nodes');
+model.nodes.addHandler([], [p('name')], function(in, out, index) {
+	out.name = 'node #' + (index + 1);
+});
+```
+
+Notice here how the node-list handler is provided an additional `index` parameter that it can optionally make use of, but otherwise exactly the same handlers used for nodes can also be used for node-lists. Again, as with node handlers, it's also possible to optionally fully-qualify the input or output properties, allowing remote parts of the model to be listened to or updated, but the `index` property always relates to the node on which `addHandler()` was invoked on.
+
+
+### Interacting With NodeLists
+
+Node-lists have four useful methods that can be used both before and after `seal()` has been invoked:
+
+  * `length()` (the number of nodes within the node-list)
+  * `item(index)` (retrieve the node at the given `index`)
+  * `addNode(index)` (add a node, optionally at a given `index`)
+  * `removeNode(index)` (remove the node at the given `index`)
+
+For example, we can retrieve the `name` property of the last item within the `nodes` node-list as follows:
+
+```js
+model.nodes.item(model.nodes.length()).get('name');
+```
+
+or add a new node to the end of a node-list like this:
+
+```js
+model.nodes.addNode();
+```
+
+
+### NodeList Properties
+
+Unlike normal nodes, nodes within node-lists don't have a `p()` method, and the `p()` method is available on the node-list instead. When used to request an input-property, the input-property received is an array containing every property-value for a given property name across an entire node-list, for example:
+
+```js
+model.addHandler([model.nodes.p('name').as('names')], [p('allNames')], function(in, out) {
+	out.allNames = in.names.join(', ');
+});
+```
+
+Node-list properties can't be used as output-properties.
+
+
+## Externally Updated Handlers
+
+Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using the handlers' `reExecute()` method. For example, a `WebSocketHandler` class might be implemented as follows:
+
+```js
+function WebSocketHandler(server) {
+  var data;
+
+  var handler = function(in, out) {
+    out.data = data;
+  }
+
+  var connection = new WebSocket(server);
+  connection.onmessage = function(event) {
+    data = event.data;
+    handler.reExecute();
+  };
+
+  this.handler = handler;
+}
+```
+
+As you may have noticed, the handler itself has not provided a `reExecute()` method, and instead the model automatically adds this method when `addHandler()` is invoked.
+
+
 ## Atomicity
 
-ComposerJs models only alert listeners once all changes have been made, and this is guaranteed by only informing listeners after the current JavaScript stack exits. This is done performantly by using [ASAP](https://www.npmjs.com/package/asap).
+There are three phases of action within the model:
+
+  1. The external API is used to update state, or an externally updated handler indicates the need to be re-executed.
+  2. Any implicated handlers are re-executed.
+  3. External listeners are notified.
+
+ComposerJs only notifies external listeners once all changes have been made, and achieves this by using [ASAP](https://www.npmjs.com/package/asap) to delay steps _2_ and _3_ until after the current call-stack has exited. However, in cases where step _1_ involves use of the `get()` method, than step _2_ will be performed early, so that the model is in a consistent state.
+
+To prevent the need for all testing code to be asynchronous, and to cope with situations where programs may need external listeners to be notified early, a `notfiyListeners()` method is provided, and which can be used as follows:
+
+```js
+model.notifyListeners();
+```
+
+Finally, to prevent handlers from using the public API (e.g. `get()` and `set()`) such methods will throw an error if invoked while any other part of the public API is still being invoked.
 
 
 ## Serialization
@@ -186,3 +253,4 @@ model.unstringify(serializedForm);
 ```
 
 The `unstringify()` method can only be used before `seal()` has been invoked, and should be used after `set()` has been invoked to provide any properties that won't be provided by handlers.
+
