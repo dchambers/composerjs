@@ -232,8 +232,17 @@ function WebSocketHandler(server) {
   var data;
 
   var handler = function(in, out) {
-    out.data = data;
+    if(!data) {
+      return false;
+    }
+    else {
+      out.data = data;
+    }
   }
+
+  handler.dispose = function() {
+    connection.close();
+  };
 
   var connection = new WebSocket(server);
   connection.onmessage = function(event) {
@@ -245,7 +254,11 @@ function WebSocketHandler(server) {
 }
 ```
 
-As you may have noticed, the handler itself has not provided a `reExecute()` method, and instead the model automatically adds this method when `addHandler()` is invoked.
+There are a number of interesting things worth nothing about this code sample:
+
+  1. The handler returns `false` if data has yet to be received, and it's currently unable to provide it's designated output-properties.
+  2. The handler has chosen to provide a `dispose()` method that enables it to perform any resource de-allocation.
+  3. The handler itself has not provided a `reExecute()` method, and instead the model automatically adds this method when `addHandler()` is invoked.
 
 
 ## Atomicity
