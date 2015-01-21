@@ -281,4 +281,4 @@ and de-serialized using the `unstringify()` method:
 model.unstringify(serializedForm);
 ```
 
-The `unstringify()` method can only be used before `seal()` has been invoked, and should be used after `set()` has been invoked to provide any properties that won't be provided by handlers.
+The `unstringify()` method should be used _after_ `set()` has been invoked to provide any properties that won't be provided by handlers.
