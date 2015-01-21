@@ -194,6 +194,35 @@ model.addHandler([model.nodes.p('name').as('names')], [p('allNames')], function(
 Node-list properties can't be used as output-properties.
 
 
+### Specialized Types
+
+It's sometimes useful to create node-lists that contain specialized nodes, but where all nodes within the list conform to an agreed base-type. To enable this, node-list properties are also functions that can be invoked with a type argument, so that specializations can be created, for example:
+
+```js
+model.createNodeList('shapes');
+model.nodes.set('area', 0); // all shapes have an 'area'
+model.nodes('circle').set('radius', 0); // circles also have a 'radius'
+model.nodes('triangle').set('type', 'equilateral'); // triangles also have a 'type'
+model.seal();
+```
+
+We can then either create standard or specialized versions of nodes depending on whether `addNode()` is invoked with a `type` argument or not:
+
+```js
+model.nodes.addNode(); // first node only has an 'area' property
+model.nodes.addNode('circle');
+model.nodes.addNode('triangle');
+```
+
+If we later need to add a 'triangle' node to the beginning of the list, we can do this as follows:
+
+```js
+model.nodes.addNode('triangle', 0);
+```
+
+In this example, while `model.nodes.p('area')` could be used to refer to the `area` property that all shape nodes have, `model.nodes.p('radius')` could not be used to refer to the `radius` property, since not all shape nodes have a `radius` property.
+
+
 ## Externally Updated Handlers
 
 Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using the handlers' `reExecute()` method. For example, a `WebSocketHandler` class might be implemented as follows:
@@ -253,4 +282,3 @@ model.unstringify(serializedForm);
 ```
 
 The `unstringify()` method can only be used before `seal()` has been invoked, and should be used after `set()` has been invoked to provide any properties that won't be provided by handlers.
-
