@@ -336,10 +336,10 @@ or if all properties are to be serialized, then simply:
 var serializedForm = model.stringify();
 ```
 
-and de-serialized using the `unstringify()` method:
+and de-serialized using the `parse()` method, for example:
 
 ```js
-model.unstringify(serializedForm);
+model.parse(serializedForm);
 ```
 
-The `unstringify()` method should be used _after_ `set()` has been invoked to provide any properties that won't be provided by handlers.
+The `parse()` method should be used _after_ `set()` has been invoked to provide any properties that won't be provided by handlers. Additionally, although `stringify()` and `parse()` can be used for serlialization, they can also be used as a convenient way to revert a model back to a known state.
