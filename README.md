@@ -192,7 +192,19 @@ model.addHandler([model.nodes.p('name').as('names')], [p('allNames')], function(
 });
 ```
 
-Node-list properties can't be used as output-properties.
+Here, node-list properties can't be used as output-properties.
+
+In addition to listening to properties directly on the nodes within a node-list, it's also possible to listen to properties that are on a sub-node within these nodes, for example:
+
+```js
+model.nodes.childNode.p('prop');
+```
+
+or even properties on grandchild nodes, for example:
+
+```js
+model.nodes.morenodes.p('prop');
+```
 
 
 ### Specialized Types
