@@ -9,6 +9,7 @@ ComposerJs models have the following attributes:
   * Sub-sections of the model can be observed, so that change can be detected, and so that dependent properties can be recalculated.
   * Model updates are atomic in nature, and all reactive property recalculation occurs as part of a single external update.
   * No subscription management code is needed as the number of nodes within the model changes.
+  * Usage of the model is prevented when it's in an incoherent state, to prevent subtle bugs.
 
 
 ## Basic Usage
@@ -335,7 +336,7 @@ model.on('resumed', function() {
 });
 ```
 
-Handlers signify their inability to provide their output-properties by returning `false`. Since using the model while it's in this state will cause an error, models that have handlers that can get into this state should perform all model updates within a `ready` call-back, for example:
+Handlers signify their inability to provide their output-properties by returning `false`. Since using the model while it's in this _incoherent_ state will cause an error, models that have handlers that can get into this state should perform all model updates within a `ready` call-back, for example:
 
 ```js
 model.on('ready', function() {
