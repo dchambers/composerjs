@@ -125,6 +125,24 @@ model.p('answer').on('change', function(value) {
 ```
 
 
+## Developing Within A Class
+
+Rather than developing your model in ad-hoc fashion, you will typically develop your model within a class, in which case you have two options as to how you create the composable model:
+
+1. `composer.create()`, when you want to keep methods like `set()` as private facets of the model you are building.
+2. `composer.mixinTo()`, when you are happy to expose methods like `set()`.
+
+Here's some example code using the second approach:
+
+```js
+function MyModel() {
+  composerjs.mixinTo(this);
+  this.addHandler(summationHandler);
+  this.seal();
+}
+```
+
+
 ## Tree Shaped Models
 
 Tree shaped models can be created using the `addNode()` and `addNodeList()` methods. The `addNode()` method allows a single sub-node to be added to an existing model node, for example:
