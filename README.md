@@ -327,7 +327,13 @@ Here, `nodes` is the array of nodes after the change.
 Models can be serialized using the `stringify()` method, for example:
 
 ```js
-var serializedForm = model.stringify()
+var serializedForm = model.stringify([model.p('prop1'), model.p('prop2')]);
+```
+
+or if all properties are to be serialized, then simply:
+
+```js
+var serializedForm = model.stringify();
 ```
 
 and de-serialized using the `unstringify()` method:
