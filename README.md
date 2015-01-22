@@ -9,7 +9,6 @@ ComposerJs models have the following attributes:
   * Sub-sections of the model can be observed, so that change can be detected, and so that dependent properties can be recalculated.
   * Model updates are atomic in nature, and all reactive property recalculation occurs as part of a single external update.
   * No subscription management code is needed as the number of nodes within the model changes.
-  * Usage of the model is prevented when it's in an incoherent state, to prevent subtle bugs.
 
 
 ## Basic Usage
@@ -242,25 +241,20 @@ Some handlers may need to indicate their need to be re-executed &mdash; for exam
 
 ```js
 function WebSocketHandler(server) {
-  var data;
+  var connection;
 
   var handler = function(in, out) {
-    if(!data) {
-      return false;
-    }
-    else {
-      out.data = data;
-    }
+    out.data = null;
+    connection = new WebSocket(server);
+
+    connection.onmessage = function(event) {
+      out.data = event.data;
+      out.hasBeenUpdated();
+    };
   }
 
   handler.dispose = function() {
     connection.close();
-  };
-
-  var connection = new WebSocket(server);
-  connection.onmessage = function(event) {
-    data = event.data;
-    handler.reExecute();
   };
 
   this.handler = handler;
@@ -269,9 +263,9 @@ function WebSocketHandler(server) {
 
 There are a number of interesting things worth nothing about this code sample:
 
-  1. The handler returns `false` if data has yet to be received, and it's currently unable to provide it's designated output-properties.
-  2. The handler has chosen to provide a `dispose()` method that enables it to perform any resource de-allocation.
-  3. The handler itself has not provided a `reExecute()` method, and instead the model automatically adds this method when `addHandler()` is invoked.
+  1. The handler initially sets the `rate` property to `null` so that downstream handlers know that the property is currently unavailable.
+  2. The handler then repeatedly invokes `out.hasBeenUpdated()` after each time it updates `out.rate`.
+  3. The handler provides a `dispose()` method that enables it to perform any resource de-allocation.
 
 
 ## Atomicity
@@ -299,9 +293,6 @@ ComposerJs emits the following events, all of which can be registered for using 
 
   * `change`
   * `mutation`
-  * `pending`
-  * `resumed`
-  * `ready`
 
 
 ### Change Event
@@ -328,35 +319,6 @@ model.nodes.on('mutation', function(nodes) {
 ```
 
 Here, `nodes` is the array of nodes after the change.
-
-
-### Pending, Resumed & Ready Events
-
-The `pending` event fires if any of the handlers are temporarily unable to provide their output-properties, while the `resumed` event fires as soon as normal service has been resumed. These events can be registered for as follows:
-
-```js
-model.on('pending', function(handler) {
-  // ...
-});
-```
-
-and:
-
-```js
-model.on('resumed', function() {
-    // ...
-});
-```
-
-Handlers signify their inability to provide their output-properties by returning `false`. Since using the model while it's in this _incoherent_ state will cause an error, models that have handlers that can get into this state should perform all model updates within a `ready` call-back, for example:
-
-```js
-model.on('ready', function() {
-  model.set('prop', 'some-value');
-});
-```
-
-The `ready` event is unique in that it only ever fires once, and in that it fires immediately if the model is currently in a _ready_ state.
 
 
 
