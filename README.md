@@ -280,6 +280,73 @@ model.notifyListeners();
 Finally, to prevent handlers from using the public API (e.g. `get()` and `set()`) such methods will throw an error if invoked while any other part of the public API is still being invoked.
 
 
+## Emitted events
+
+ComposerJs emits the following events, all of which can be registered for using the `on()` method:
+
+  * `change`
+  * `mutation`
+  * `pending`
+  * `resumed`
+  * `ready`
+
+
+### Change Event
+
+The `change` event fires when a properties value has changed, and is registered for as follows:
+
+```js
+model.p('prop').on('change', function(value) {
+  // ...
+});
+```
+
+Here, `value` is the new value of the property after the change.
+
+
+### Mutation Event
+
+The `mutation` event fires if nodes are either added or removed from a node-list, and is registered for as follows:
+
+```js
+model.nodes.on('mutation', function(nodes) {
+  // ...
+});
+```
+
+Here, `nodes` is the array of nodes after the change.
+
+
+### Pending, Resumed & Ready Events
+
+The `pending` event fires if any of the handlers are temporarily unable to provide their output-properties, while the `resumed` event fires as soon as normal service has been resumed. These events can be registered for as follows:
+
+```js
+model.on('pending', function(handler) {
+  // ...
+});
+```
+
+and:
+
+```js
+model.on('resumed', function() {
+    // ...
+});
+```
+
+Handlers signify their inability to provide their output-properties by returning `false`. Since using the model while it's in this state will cause an error, models that have handlers that can get into this state should perform all model updates within a `ready` call-back, for example:
+
+```js
+model.on('ready', function() {
+  model.set('prop', 'some-value');
+});
+```
+
+The `ready` event is unique in that it only ever fires once, and in that it fires immediately if the model is currently in a _ready_ state.
+
+
+
 ## Serialization
 
 Models can be serialized using the `stringify()` method, for example:
