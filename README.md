@@ -184,7 +184,7 @@ Node-lists have four useful methods that can be used both before and after `seal
   * `length()` (the number of nodes within the node-list)
   * `item(index)` (retrieve the node at the given `index`)
   * `addNode(index)` (add a node, optionally at a given `index`)
-  * `removeNode(index)` (remove the node at the given `index`)
+  * `removeNode(index)` (remove the node at the given `index`, or the last node if no index is provided)
 
 For example, we can retrieve the `name` property of the last item within the `nodes` node-list as follows:
 
