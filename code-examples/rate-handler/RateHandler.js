@@ -6,8 +6,8 @@ var Subscriber = require('./Subscriber');
 function RateHandler(side, fieldMap) {
   fieldMap = fieldMap || {};
 
-  this.inputs = [p('amount'), p('tenor'), p('currencyPair')];
-  this.outputs = [p(side + '-rate')];
+  this.inputs = ['amount', 'tenor', 'currencyPair'];
+  this.outputs = [side + '-rate'];
 
   this._side = side;
   this._subscriber = new Subscriber(this.inputs.map(function(field) {

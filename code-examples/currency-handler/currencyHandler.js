@@ -7,7 +7,7 @@ function currencyHandler(in, out) {
   out.termCurrency = in.currencyPair.substr(4, 6);
 }
 
-currencyHandler.inputs = [p('currencyPair')];
-currencyHandler.outputs = [p('baseCurrency')];
+currencyHandler.inputs = ['currencyPair'];
+currencyHandler.outputs = ['baseCurrency'];
 
 module.exports = currencyHandler;

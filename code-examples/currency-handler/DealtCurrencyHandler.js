@@ -5,8 +5,8 @@ var p = require('composerjs').p;
 function DealtCurrencyHandler() {
   this._baseCurrency = true;
 
-  this.inputs = [p('baseCurrency'), p('termCurrency')];
-  this.outputs = [p('dealtCurrency')];
+  this.inputs = ['baseCurrency', 'termCurrency'];
+  this.outputs = ['dealtCurrency'];
 }
 
 DealtCurrencyHandler.prototype.handler = function(in, out) {

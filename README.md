@@ -24,14 +24,14 @@ after which you can add handlers to the model, such as the following summation h
 
 ```js
 var p = composerjs.p;
-model.addHandler([p('value1'), p('value2')], [p('sum')], function(in, out) {
+model.addHandler(['value1', 'value2'], ['sum'], function(in, out) {
 	out.sum = in.value1 + in.value2;
 });
 ```
 
-Here, `p()` denotes _property_, and is used to indicate the set of _input-properties_ (the first argument) and the set of _output-properties_ (the second argument) to be used by the handler.
+where the first two arguments are used to provide the set of input and output properties to be used by the handler.
 
-Since composable models are useful precisely because they increase re-usabilty, it will often be the case that the property names used within the model don't correlate with the names used by the handler, in which case the `as()` method can be used for translation.
+Since composable models are useful precisely because they increase re-usabilty, it will often be the case that the property names used within the handler don't correlate with the names used by the model, in which case the `from()` method can be used for translation.
 
 For example, if our summation handler is defined like this:
 
@@ -39,14 +39,14 @@ For example, if our summation handler is defined like this:
 function summationHandler(in, out) {
 	out.sum = in.x + in.y;
 }
-summationHandler.inputs = [p('x'), p('y')];
-summationHandler.outputs = [p('sum')];
+summationHandler.inputs = ['x', 'y'];
+summationHandler.outputs = ['sum'];
 ```
 
 then we might make use of this handler as follows:
 
 ```js
-model.addHandler([p('value1').as('x'), p('value2').as('y')], summationHandler.outputs, summationHandler);
+model.addHandler([p('x').from('value1'), p('y').from('value2')], summationHandler.outputs, summationHandler);
 ```
 
 In the case where we are happy to use the same names in the model as used by the handler we could write:
@@ -60,6 +60,7 @@ or more simply:
 ```js
 model.addHandler(summationHandler);
 ```
+
 
 ## Sealing The Model
 
@@ -80,7 +81,7 @@ Given that the `seal()` method ensures that all _input-properties_ have been pro
 We could solve this by either adding another handler before invoking `seal()`, for example:
 
 ```js
-model.addHandler([], [p('value1'), p('value2')] someHandler);
+model.addHandler([], ['value1', 'value2'] someHandler);
 model.seal();
 ```
 
@@ -131,8 +132,8 @@ Handlers can be either functions or objects, where handler objects make their ha
 
 ```js
 function SummationHandler() {
-  this.inputs = [p('x'), p('y')];
-  this.outputs = [p('sum')];
+  this.inputs = ['x', 'y'];
+  this.outputs = ['sum'];
 }
 
 SummationHandler.prototype.handler = function(in, out) {
@@ -170,27 +171,26 @@ model.addNode('node');
 which causes the new model node to be immediately accessible as `model.node`, allowing handlers to create or depend on the properties of the sub-node, for example:
 
 ```js
-model.node.addHandler([model.p('value1'), model.p('value2')], [p('product')], function(in, out) {
-	out.product = in.value1 * in.value2;
+model.node.addHandler(p('x').from(model.p('value1')), p('y').from(model.p('value2'))], ['product'], function(in, out) {
+	out.product = in.x * in.y;
 });
 ```
 
-Notice here how the properties can optionally be fully-qualified, allowing properties from remote parts of the model to be listened to or updated.
+Notice here how the properties can optionally come from remote parts of the model.
 
 
 ## Repeated Tree Elements
 
 Quite often, models have multiple nodes with exactly the same shape, but where the number of nodes can vary over the lifetime of the model. When this is the case, the `addNodeList()` method can be used, for example:
 
-
 ```js
 model.addNodeList('nodes');
-model.nodes.addHandler([], [p('name')], function(in, out, index) {
+model.nodes.addHandler([], ['name'], function(in, out, index) {
 	out.name = 'node #' + (index + 1);
 });
 ```
 
-Notice here how the node-list handler is provided an additional `index` parameter that it can optionally make use of, but otherwise exactly the same handlers used for nodes can also be used for node-lists. Again, as with node handlers, it's also possible to optionally fully-qualify the input or output properties, allowing remote parts of the model to be listened to or updated, but the `index` property always relates to the node on which `addHandler()` was invoked on.
+Notice here how the node-list handler is provided an additional `index` parameter that it can optionally make use of, but otherwise exactly the same handlers used for nodes can also be used for node-lists. Again, as with node handlers, it's also possible to refer to properties on remote parts of the model, but the `index` property always relates to the node on which `addHandler()` was invoked on.
 
 
 ### Interacting With NodeLists
@@ -220,7 +220,7 @@ model.nodes.addNode();
 Unlike normal nodes, nodes within node-lists don't have a `p()` method, and the `p()` method is available on the node-list instead. When used to request an input-property, the input-property received is an array containing every property-value for a given property name across an entire node-list, for example:
 
 ```js
-model.addHandler([model.nodes.p('name').as('names')], [p('allNames')], function(in, out) {
+model.addHandler([p('names').from(nodes.p('name'))], ['allNames'], function(in, out) {
 	out.allNames = in.names.join(', ');
 });
 ```
@@ -246,18 +246,18 @@ It's sometimes useful to create node-lists that contain specialized nodes, but w
 
 ```js
 model.addNodeList('shapes');
-model.nodes.set('area', 0); // all shapes have an 'area'
-model.nodes('circle').set('radius', 0); // circles also have a 'radius'
-model.nodes('triangle').set('type', 'equilateral'); // triangles also have a 'type'
+model.shapes.set('area', 0); // all shapes have an 'area'
+model.shapes('circle').set('radius', 0); // circles also have a 'radius'
+model.shapes('triangle').set('type', 'equilateral'); // triangles also have a 'type'
 model.seal();
 ```
 
 We can then either create standard or specialized versions of nodes depending on whether `addNode()` is invoked with a `type` argument or not:
 
 ```js
-model.nodes.addNode(); // first node only has an 'area' property
-model.nodes.addNode('circle');
-model.nodes.addNode('triangle');
+model.shapes.addNode(); // first node only has an 'area' property
+model.shapes.addNode('circle');
+model.shapes.addNode('triangle');
 ```
 
 If we later need to add a 'triangle' node to the beginning of the list, we can do this as follows:
@@ -266,18 +266,18 @@ If we later need to add a 'triangle' node to the beginning of the list, we can d
 model.nodes.addNode('triangle', 0);
 ```
 
-In this example, while `model.nodes.p('area')` could be used to refer to the `area` property that all shape nodes have, `model.nodes.p('radius')` could not be used to refer to the `radius` property, since not all shape nodes have a `radius` property.
+In this example, while `model.shapes.p('area')` could be used to refer to the `area` property that all shape nodes have, `model.shapes.p('radius')` could not be used to refer to the `radius` property, since not all shape nodes have a `radius` property.
 
 
 ## Externally Updated Handlers
 
-Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using the handlers' `reExecute()` method. For example, a `WebSocketHandler` class might be implemented as follows:
+Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using `out.hasBeenUpdated()`. For example, a `WebSocketHandler` class might be implemented as follows:
 
 ```js
 function WebSocketHandler(server) {
   var connection;
 
-  var handler = function(in, out) {
+  this.handler = function(in, out) {
     out.data = null;
     connection = new WebSocket(server);
 
@@ -287,18 +287,16 @@ function WebSocketHandler(server) {
     };
   }
 
-  handler.dispose = function() {
+  this.dispose = function() {
     connection.close();
   };
-
-  this.handler = handler;
 }
 ```
 
 There are a number of interesting things worth nothing about this code sample:
 
-  1. The handler initially sets the `rate` property to `null` so that downstream handlers know that the property is currently unavailable.
-  2. The handler then repeatedly invokes `out.hasBeenUpdated()` after each time it updates `out.rate`.
+  1. The handler initially sets the `data` property to `null`, so that downstream handlers know that the property is currently unavailable.
+  2. The handler then repeatedly invokes `out.hasBeenUpdated()` after each time it updates `out.data`.
   3. The handler provides a `dispose()` method that enables it to perform any resource de-allocation.
 
 
@@ -307,8 +305,8 @@ There are a number of interesting things worth nothing about this code sample:
 If you need to attach multiple instances of the same handler to a node, you can use `p()` to prefix the properties, for example:
 
 ```js
-model.addHandler([], [p('prop1').as('foo-prop1'), p('prop2').as('foo-prop2')], hander);
-model.addHandler([], [p('prop1').as('bar-prop1'), p('prop2').as('bar-prop2')], hander);
+model.addHandler([], [p('prop1').from('foo-prop1'), p('prop2').from('foo-prop2')], hander);
+model.addHandler([], [p('prop1').from('bar-prop1'), p('prop2').from('bar-prop2')], hander);
 ```
 
 but this becomes inconvenient when the handler has lots of properties that need prefixing. To help with this, the `ps()` method can be used to prefix all properties en-masse, as follows:
@@ -318,7 +316,7 @@ model.addHandler([], [ps(handler.outputs).prefixedWith('foo-')], hander);
 model.addHandler([], [ps(handler.outputs).prefixedWith('bar-')], hander);
 ```
 
-A related feature of `ps()` is its `relativeTo()` method, that allows a list of relative property definitions specified with `p()` to be made relative to some node, as though they had been specified with `node.p()`. This is useful for handlers within node-lists where the input-properties for that handler are available in the parent node, or some other node, for example:
+A related feature of `ps()` is its `relativeTo()` method, that allows a list of property definitions to be made relative to some node, as though they had been specified with `node.p()`. This is useful for handlers within node-lists where the input-properties for that handler are available in the parent node, or some other node, for example:
 
 ```js
 model.nodes.addHandler([], [ps(handler.outputs).relativeTo(model)], hander);
@@ -406,7 +404,7 @@ where `model` is the root model node.
 Models can be serialized using the `stringify()` method, for example:
 
 ```js
-var serializedForm = model.stringify([model.p('prop1'), model.p('prop2')]);
+var serializedForm = model.stringify([model.p('prop'), model.nodes.p('child-prop')]);
 ```
 
 or if all properties are to be serialized, then simply:
@@ -424,10 +422,9 @@ model.parse(serializedForm);
 The `parse()` method should be used _after_ `set()` has been invoked to provide any properties that won't be provided by handlers. Additionally, although `stringify()` and `parse()` can be used for serlialization, they can also be used as a convenient way to revert a model back to a known state.
 
 
-
 ## Genuine Circular Dependencies
 
-ComposerJs doesn't allow handlers that form circular dependencies, yet there are occasions when this is actually required. In such cases the `beforechange` event can be used to create a circular dependency, but where the listener is responsible for ensuring that infinite loops don't occur.
+ComposerJs doesn't allow handlers that form circular dependencies, yet there are occasions when this is actually required. In such cases, the `beforechange` event can be used to create a circular dependency, but where the listener is responsible for ensuring that infinite loops don't occur.
 
 For example:
 
