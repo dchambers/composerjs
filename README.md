@@ -308,6 +308,13 @@ A related feature of `ps()` is its `relativeTo()` method, that allows a list of 
 model.nodes.addHandler([], [ps(handler.outputs).relativeTo(model)], hander);
 ```
 
+If you don't want all of the properties to be relative to the given node, you can use `for()` or `excluding()` to either whitelist or blacklist which properties will be affected, for example:
+
+```js
+ps(handler.inputs).relativeTo(model).for('only-this-property');
+ps(handler.outputs).relativeTo(model).exluding('not-this-property');
+```
+
 
 ## Atomicity
 
