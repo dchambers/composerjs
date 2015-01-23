@@ -149,7 +149,17 @@ Rather than developing your model in ad-hoc fashion, you will typically develop 
 1. `composer.create()`, when you want to keep methods like `set()` as private facets of the model you are building.
 2. `composer.mixinTo()`, when you are happy to expose methods like `set()`.
 
-Here's some example code using the second approach:
+A class using the first approach might look like this:
+
+```js
+function MyModel() {
+  this._model = composerjs.create();
+  this._model.addHandler(summationHandler);
+  this._model.seal();
+}
+```
+
+Whereas a class using the second approach would look like this:
 
 ```js
 function MyModel() {
