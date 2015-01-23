@@ -357,6 +357,7 @@ ComposerJs emits the following events, all of which can be registered for using 
 
   * `change`
   * `mutation`
+  * `beforechange`
 
 
 ### Change Event
@@ -385,6 +386,20 @@ model.nodes.on('mutation', function(nodes) {
 Here, `nodes` is the array of nodes after the change.
 
 
+### Before-Change Event
+
+The `beforechange` event fires prior to the `change` and `mutation` events firing. It is useful since if `set()`, `addNode()` or `removeNode()` are invoked at this the point, the `change` and `mutation` events won't fire until the handlers have first had a chance to react to any changes.
+
+This event can be registered for as follows:
+
+```js
+model.on('beforechange', function(model) {
+  // ...
+});
+```
+
+where `model` is the root model node.
+
 
 ## Serialization
 
@@ -407,3 +422,21 @@ model.parse(serializedForm);
 ```
 
 The `parse()` method should be used _after_ `set()` has been invoked to provide any properties that won't be provided by handlers. Additionally, although `stringify()` and `parse()` can be used for serlialization, they can also be used as a convenient way to revert a model back to a known state.
+
+
+
+## Genuine Circular Dependencies
+
+ComposerJs doesn't allow handlers that form circular dependencies, yet there are occasions when this is actually required. In such cases the `beforechange` event can be used to create a circular dependency, but where the listener is responsible for ensuring that infinite loops don't occur.
+
+For example:
+
+```js
+model.on('beforechange', function(model) {
+  var startProperty = model.get('end-prop1') + model.get('end-prop2');
+
+  if(startProperty != model.get('start-prop')) {
+    model.set('start-prop', startProperty);
+  }
+});
+```
