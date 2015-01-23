@@ -164,11 +164,11 @@ Notice here how the properties can optionally be fully-qualified, allowing prope
 
 ## Repeated Tree Elements
 
-Quite often, models have multiple nodes with exactly the same shape, but where the number of nodes can vary over the lifetime of the model. When this is the case, the `createNodeList()` method can be used, for example:
+Quite often, models have multiple nodes with exactly the same shape, but where the number of nodes can vary over the lifetime of the model. When this is the case, the `addNodeList()` method can be used, for example:
 
 
 ```js
-model.createNodeList('nodes');
+model.addNodeList('nodes');
 model.nodes.addHandler([], [p('name')], function(in, out, index) {
 	out.name = 'node #' + (index + 1);
 });
@@ -229,7 +229,7 @@ model.nodes.morenodes.p('prop');
 It's sometimes useful to create node-lists that contain specialized nodes, but where all nodes within the list conform to an agreed base-type. To enable this, node-list properties are also functions that can be invoked with a type argument, so that specializations can be created, for example:
 
 ```js
-model.createNodeList('shapes');
+model.addNodeList('shapes');
 model.nodes.set('area', 0); // all shapes have an 'area'
 model.nodes('circle').set('radius', 0); // circles also have a 'radius'
 model.nodes('triangle').set('type', 'equilateral'); // triangles also have a 'type'
