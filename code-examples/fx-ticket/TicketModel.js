@@ -20,7 +20,7 @@ function TicketModel(currencyPair) {
   this.addHandler(this._dealtCurrencyHandler);
   this.legs.addHandler(bidRateHandler);
   this.legs.addHandler(askRateHandler);
-  this.legs.addHandler(multiLegTenorHandler);
+  this.legs.set('tenor', 'spot');
   this.legs.set('amount', 1);
   this.set('type', 'outright');
   this.set('currencyPair', currencyPair);
@@ -33,6 +33,7 @@ function TicketModel(currencyPair) {
     }
     else {
       this.legs.addNode();
+      this.legs.item(1).set('tenor', this.legs.item(0).get('tenor'));
     }
   });
 }
