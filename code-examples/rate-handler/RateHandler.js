@@ -9,27 +9,24 @@ function RateHandler(side, fieldMap) {
   this.inputs = [p('amount'), p('tenor'), p('currencyPair')];
   this.outputs = [p(side + '-rate')];
 
-  var handler = function(in, out) {
-    out.rate = null;
-
-    subscriber.requestSubject('/FX/' + in.currencyPair + '/' + in.tenor + '/' + side + '/' + in.amount, function(data) {
-      out.rate = data.rate;
-      out.hasBeenUpdated();
-    });
-  };
-
-  handler.dispose = function() {
-    subscriber.dispose();
-  };
-
-  var mappedFields = handler.inputs.map(function(field) {
+  this._side = side;
+  this._subscriber = new Subscriber(this.inputs.map(function(field) {
     return (fieldMap[field]) ? fieldMap[field] : field
-  });
-  var subscriber = new Subscriber(mappedFields);
-
-  this.handler = handler;
-  this._subscriber = subscriber;
+  }));
 }
+
+RateHandler.prototype.handler = function(in, out) {
+  out.rate = null;
+
+  this._subscriber.requestSubject('/FX/' + in.currencyPair + '/' + in.tenor + '/' + this._side + '/' + in.amount, function(data) {
+    out.rate = data.rate;
+    out.hasBeenUpdated();
+  });
+};
+
+RateHandler.prototype.dispose = function() {
+  this._subscriber.dispose();
+};
 
 RateHandler.prototype.pause = function() {
   this._subscriber.pause();

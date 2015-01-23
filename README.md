@@ -125,6 +125,22 @@ model.p('answer').on('change', function(value) {
 ```
 
 
+## Handler Objects
+
+Handlers can be either functions or objects, where handler objects make their handler function available using a `handler` property. For example, the `summationHandler` function defined previously could instead be defined as an object as follows:
+
+```js
+function SummationHandler() {
+  this.inputs = [p('x'), p('y')];
+  this.outputs = [p('sum')];
+}
+
+SummationHandler.prototype.handler = function(in, out) {
+  out.sum = in.x + in.y;
+};
+```
+
+
 ## Developing Within A Class
 
 Rather than developing your model in ad-hoc fashion, you will typically develop your model within a class, in which case you have two options as to how you create the composable model:
