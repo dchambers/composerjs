@@ -15,7 +15,7 @@ function RateHandler(side, fieldMap) {
   }));
 }
 
-RateHandler.prototype.handler = function(in, out) {
+RateHandler.prototype.handler = function(in, out, current) {
   out.rate = null;
 
   this._subscriber.requestSubject('/FX/' + in.currencyPair + '/' + in.tenor + '/' + this._side + '/' + in.amount, function(data) {

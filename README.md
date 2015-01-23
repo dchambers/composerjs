@@ -24,7 +24,7 @@ after which you can add handlers to the model, such as the following summation h
 
 ```js
 var p = composerjs.p;
-model.addHandler(['value1', 'value2'], ['sum'], function(in, out) {
+model.addHandler(['value1', 'value2'], ['sum'], function(in, out, current) {
 	out.sum = in.value1 + in.value2;
 });
 ```
@@ -36,7 +36,7 @@ Since composable models are useful precisely because they increase re-usabilty, 
 For example, if our summation handler is defined like this:
 
 ```js
-function summationHandler(in, out) {
+function summationHandler(in, out, current) {
 	out.sum = in.x + in.y;
 }
 summationHandler.inputs = ['x', 'y'];
@@ -126,6 +126,19 @@ model.p('answer').on('change', function(value) {
 ```
 
 
+## Handler Functions
+
+Handler functions normally look like this:
+
+```js
+function(in, out, current) {
+  // ...
+}
+```
+
+where `in`, `out` & `current` are maps of properties. The `current` property is very similar to `out`, except that it contains values based on the models state before any of the handlers were executed. It is of most importance to handlers whose output-properties may be updated externally using the `set()` method.
+
+
 ## Handler Objects
 
 Handlers can be either functions or objects, where handler objects make their handler function available using a `handler` property. For example, the `summationHandler` function defined previously could instead be defined as an object as follows:
@@ -136,7 +149,7 @@ function SummationHandler() {
   this.outputs = ['sum'];
 }
 
-SummationHandler.prototype.handler = function(in, out) {
+SummationHandler.prototype.handler = function(in, out, current) {
   out.sum = in.x + in.y;
 };
 ```
@@ -181,7 +194,7 @@ model.addNode('node');
 which causes the new model node to be immediately accessible as `model.node`, allowing handlers to create or depend on the properties of the sub-node, for example:
 
 ```js
-model.node.addHandler(p('x').from(model.p('value1')), p('y').from(model.p('value2'))], ['product'], function(in, out) {
+model.node.addHandler(p('x').from(model.p('value1')), p('y').from(model.p('value2'))], ['product'], function(in, out, current) {
 	out.product = in.x * in.y;
 });
 ```
@@ -195,12 +208,12 @@ Quite often, models have multiple nodes with exactly the same shape, but where t
 
 ```js
 model.addNodeList('nodes');
-model.nodes.addHandler([], ['name'], function(in, out, index) {
+model.nodes.addHandler([], ['name'], function(in, out, current, index) {
 	out.name = 'node #' + (index + 1);
 });
 ```
 
-Notice here how the node-list handler is provided an additional `index` parameter that it can optionally make use of, but otherwise exactly the same handlers used for nodes can also be used for node-lists. Again, as with node handlers, it's also possible to refer to properties on remote parts of the model, but the `index` property always relates to the node on which `addHandler()` was invoked on.
+Notice here how the node-list handler is provided an additional `index` parameter that it can optionally make use of, and `current` is now a list of maps, but otherwise exactly the same handlers used for nodes can also be used for node-lists. Again, as with node handlers, it's also possible to refer to properties on remote parts of the model, but the `index` property always relates to the node on which `addHandler()` was invoked on.
 
 
 ### Interacting With NodeLists
@@ -230,7 +243,7 @@ model.nodes.addNode();
 Unlike normal nodes, nodes within node-lists don't have a `p()` method, and the `p()` method is available on the node-list instead. When used to request an input-property, the input-property received is an array containing every property-value for a given property name across an entire node-list, for example:
 
 ```js
-model.addHandler([p('names').from(nodes.p('name'))], ['allNames'], function(in, out) {
+model.addHandler([p('names').from(nodes.p('name'))], ['allNames'], function(in, out, current) {
 	out.allNames = in.names.join(', ');
 });
 ```
@@ -287,7 +300,7 @@ Some handlers may need to indicate their need to be re-executed &mdash; for exam
 function WebSocketHandler(server) {
   var connection;
 
-  this.handler = function(in, out) {
+  this.handler = function(in, out, current) {
     out.data = null;
     connection = new WebSocket(server);
 

@@ -9,7 +9,7 @@ function DealtCurrencyHandler() {
   this.outputs = ['dealtCurrency'];
 }
 
-DealtCurrencyHandler.prototype.handler = function(in, out) {
+DealtCurrencyHandler.prototype.handler = function(in, out, current) {
   if(this._baseCurrency) {
     out.dealtCurrency = in.baseCurrency;
   }
