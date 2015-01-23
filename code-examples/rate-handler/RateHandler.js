@@ -3,13 +3,16 @@
 var p = require('composerjs').p;
 var Subscriber = require('./Subscriber');
 
-function RateHandler(fieldMap) {
+function RateHandler(side, fieldMap) {
   fieldMap = fieldMap || {};
+
+  this.inputs = [p('amount'), p('tenor'), p('currencyPair')];
+  this.outputs = [p(side + '-rate')];
 
   var handler = function(in, out) {
     out.rate = null;
 
-    subscriber.requestSubject('/FX/' + in.currencyPair + '/' + in.tenor + '/' + in.baseCurrency + '/' + in.amount, function(data) {
+    subscriber.requestSubject('/FX/' + in.currencyPair + '/' + in.tenor + '/' + side + '/' + in.amount, function(data) {
       out.rate = data.rate;
       out.hasBeenUpdated();
     });
@@ -18,9 +21,6 @@ function RateHandler(fieldMap) {
   handler.dispose = function() {
     subscriber.dispose();
   };
-
-  handler.inputs = [p('amount'), p('tenor'), p('baseCurrency'), p('currencyPair')];
-  handler.outputs = [p('rate')];
 
   var mappedFields = handler.inputs.map(function(field) {
     return (fieldMap[field]) ? fieldMap[field] : field

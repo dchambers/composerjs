@@ -1,10 +1,10 @@
 'use strict';
 
 var p = require('composerjs').p;
-var CurrencyPairUtil = require('caplin/fx/util/CurrencyPair');
 
 function currencyHandler(in, out) {
-  out.baseCurrency = CurrencyPairUtil.getBaseCurrency(in.currencyPair);
+  out.baseCurrency = in.currencyPair.substr(0, 3);
+  out.termCurrency = in.currencyPair.substr(4, 6);
 }
 
 currencyHandler.inputs = [p('currencyPair')];

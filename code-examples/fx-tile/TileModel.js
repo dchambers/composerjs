@@ -4,20 +4,25 @@ var composerjs = require('composerjs');
 var p = composerjs.p;
 var ps = composerjs.ps;
 var currencyHandler = require('../currency-handler/currencyHandler');
+var DealturrencyHandler = require('../currency-handler/DealtCurrencyHandler');
 var RateHandler = require('../rate-handler/RateHandler');
 
 function TileModel(currencyPair) {
-  var bidRateHandler = new RateHandler().handler;
-  var askRateHandler = new RateHandler().handler;
+  this._dealtCurrencyHandler = new DealtCurrencyHandler();
 
   composerjs.mixinTo(this);
   this.addHandler(currencyHandler);
-  this.addHandler(ps(bidRateHandler.inputs).prefixedWith('bid-'), [p('rate').as('bid-rate')], bidRateHandler);
-  this.addHandler(ps(askRateHandler.inputs).prefixedWith('ask-'), [p('rate').as('ask-rate')], askRateHandler);
-  this.set('tenor', 'SPOT');
+  this.addHandler(this._dealtCurrencyHandler);
+  this.addHandler(new RateHandler('bid'));
+  this.addHandler(new RateHandler('ask'));
+  this.set('tenor', 'spot');
   this.set('amount', 1);
   this.set('currencyPair', currencyPair);
   this.seal();
 }
+
+TileModel.prototype.switchDealtCurrency() {
+  this._dealtCurrencyHandler.switch();
+};
 
 module.exports = TileModel;
