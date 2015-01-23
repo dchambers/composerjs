@@ -14,7 +14,7 @@ function TicketModel(currencyPair) {
   composerjs.mixinTo(this);
   this.addNodeList('legs');
   this.addHandler(currencyHandler);
-  var rateHandlerInputs = ps(bidRateHandler).relativeTo(this);
+  var rateHandlerInputs = [p('amount'), p('tenor'), this.p('baseCurrency'), this.p('currencyPair')];
   this.legs.addHandler(ps(rateHandlerInputs).prefixedWith('bid-'), [p('rate').as('bid-rate')], bidRateHandler);
   this.legs.addHandler(ps(rateHandlerInputs).prefixedWith('ask-'), [p('rate').as('ask-rate')], askRateHandler);
   this.set('type', 'OUTRIGHT');
