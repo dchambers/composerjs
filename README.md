@@ -286,6 +286,23 @@ There are a number of interesting things worth nothing about this code sample:
   3. The handler provides a `dispose()` method that enables it to perform any resource de-allocation.
 
 
+## Using A Handler Multiple Times
+
+If you need to attach multiple instances of the same handler to a node, you can use `p()` to prefix the properties, for example:
+
+```js
+model.addHandler([], [p('prop1').as('foo-prop1'), p('prop2').as('foo-prop2')], hander);
+model.addHandler([], [p('prop1').as('bar-prop1'), p('prop2').as('bar-prop2')], hander);
+```
+
+but this becomes inconvenient when the handler has lots of properties that need prefixing. To help with this, the `ps()` method can be used to prefix all properties en-masse, as follows:
+
+```js
+model.addHandler([], [ps(handler.outputs).prefixedWith('foo-')], hander);
+model.addHandler([], [ps(handler.outputs).prefixedWith('bar-')], hander);
+```
+
+
 ## Atomicity
 
 There are three phases of action within the model:
