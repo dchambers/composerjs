@@ -302,6 +302,12 @@ model.addHandler([], [ps(handler.outputs).prefixedWith('foo-')], hander);
 model.addHandler([], [ps(handler.outputs).prefixedWith('bar-')], hander);
 ```
 
+A related feature of `ps()` is its `relativeTo()` method, that allows a list of relative property definitions specified with `p()` to be made relative to some node, as though they had been specified with `node.p()`. This is useful for handlers within node-lists where the input-properties for that handler are available in the parent node, or some other node, for example:
+
+```js
+model.nodes.addHandler([], [ps(handler.outputs).relativeTo(model)], hander);
+```
+
 
 ## Atomicity
 

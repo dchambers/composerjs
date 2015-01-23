@@ -2,7 +2,7 @@
 
 var composerjs = require('composerjs');
 var p = composerjs.p;
-var ps = composerjs.ps; // TODO: document this feature
+var ps = composerjs.ps;
 var currencyHandler = require('../currency-handler/currencyHandler');
 var RateHandler = require('../rate-handler/RateHandler');
 

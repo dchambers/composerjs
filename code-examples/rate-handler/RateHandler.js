@@ -19,8 +19,8 @@ function RateHandler(fieldMap) {
     subscriber.dispose();
   };
 
-  handler.inputs = ['amount', 'tenor', 'baseCurrency', 'currencyPair'];
-  handler.outputs = ['rate'];
+  handler.inputs = [p('amount'), p('tenor'), p('baseCurrency'), p('currencyPair')];
+  handler.outputs = [p('rate')];
 
   var mappedFields = handler.inputs.map(function(field) {
     return (fieldMap[field]) ? fieldMap[field] : field
