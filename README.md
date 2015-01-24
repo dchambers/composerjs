@@ -361,15 +361,15 @@ There are three phases of action within the model:
   2. Any implicated handlers are re-executed.
   3. External listeners are notified.
 
-ComposerJs only notifies external listeners once all changes have been made, and achieves this by using [ASAP](https://www.npmjs.com/package/asap) to delay steps _2_ and _3_ until after the current call-stack has exited. However, in cases where step _1_ involves use of the `get()` method, than step _2_ will be performed early, so that the model is in a consistent state.
+ComposerJs only notifies external listeners once all changes have been made, and achieves this by using [ASAP](https://www.npmjs.com/package/asap) to delay steps _2_ and _3_ until after the current call-stack has exited. However, in cases where step _1_ involves the use of any of the _accessor_ methods (e.g. `get()`), than step _2_ will be performed early, so that the model is in a consistent state.
 
-To prevent the need for all testing code to be asynchronous, and to cope with situations where programs may need external listeners to be notified early, a `notfiyListeners()` method is provided, and which can be used as follows:
+To prevent the need for all testing code to be asynchronous, and to cope with situations where programs may need external listeners to be notified early, a `notfiyListeners()` method is provided, which can be used as follows:
 
 ```js
 model.notifyListeners();
 ```
 
-Finally, to prevent handlers from using the public API (e.g. `get()` and `set()`) such methods will throw an error if invoked while any other part of the public API is still being invoked.
+Finally, to prevent handlers from using the public API, use of any of the _mutator_ methods  (e.g. `set()`) in the _handler-phase_ will cause an error to be thrown, and use of any of the _accessor_ methods  (e.g. `get()`) will cause a warning to be logged to the console &mdash; we limit ourselves to logging to the console since developers will often find it useful to introspect the model while they are debugging handlers.
 
 
 ## Emitted events
