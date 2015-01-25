@@ -1,8 +1,6 @@
 'use strict';
 
 var composerjs = require('composerjs');
-var p = composerjs.p;
-var ps = composerjs.ps;
 var currencyHandler = require('../currency-handler/currencyHandler');
 var multiLegTenorHandler = require('../tenor-handler/multiLegTenorHandler');
 var RateHandler = require('../rate-handler/RateHandler');
@@ -10,9 +8,9 @@ var RateHandler = require('../rate-handler/RateHandler');
 function TicketModel(currencyPair) {
   this._dealtCurrencyHandler = new DealtCurrencyHandler();
   var bidRateHandler = new RateHandler('bid');
-  bidRateHandler.inputs = ps(bidRateHandler.inputs).relativeTo(this).excluding('currencyPair');
+  bidRateHandler.inputs = composerjs.props(bidRateHandler.inputs).relativeTo(this).excluding('currencyPair');
   var askRateHandler = new RateHandler('ask');
-  askRateHandler.inputs = ps(askRateHandler.inputs).relativeTo(this).excluding('currencyPair');
+  askRateHandler.inputs = composerjs.props(askRateHandler.inputs).relativeTo(this).excluding('currencyPair');
 
   composerjs.mixinTo(this);
   this.addNodeList('legs');

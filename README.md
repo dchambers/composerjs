@@ -23,7 +23,6 @@ var model = composerjs.create();
 after which you can add handlers to the model, such as the following summation handler:
 
 ```js
-var p = composerjs.p;
 model.addHandler(['value1', 'value2'], ['sum'], function(in, out, current) {
 	out.sum = in.value1 + in.value2;
 });
@@ -46,7 +45,7 @@ summationHandler.outputs = ['sum'];
 then we might make use of this handler as follows:
 
 ```js
-model.addHandler([p('x').from('value1'), p('y').from('value2')], summationHandler.outputs, summationHandler);
+model.addHandler([model.p('value1').as('x'), model.p('value2').as('y')], summationHandler.outputs, summationHandler);
 ```
 
 In the case where we are happy to use the same names in the model as used by the handler we could write:
@@ -60,6 +59,12 @@ or more simply:
 ```js
 model.addHandler(summationHandler);
 ```
+
+The `addHandler()` method accepts lists containing:
+
+  * _property-specifiers_ (e.g. `[model.p('prop').as('prop')]`)
+  * _properties_ (e.g. `[model.p('prop')]`)
+  * _strings_ (e.g. `['prop']`)
 
 
 ## Sealing The Model
@@ -194,7 +199,7 @@ model.addNode('node');
 which causes the new model node to be immediately accessible as `model.node`, allowing handlers to create or depend on the properties of the sub-node, for example:
 
 ```js
-model.node.addHandler(p('x').from(model.p('value1')), p('y').from(model.p('value2'))], ['product'], function(in, out, current) {
+model.node.addHandler(model.p('value1').as('x'), model.p('value2').as('y')], ['product'], function(in, out, current) {
 	out.product = in.x * in.y;
 });
 ```
@@ -243,7 +248,7 @@ model.nodes.addNode();
 Unlike normal nodes, nodes within node-lists don't have a `p()` method, and the `p()` method is available on the node-list instead. When used to request an input-property, the input-property received is an array containing every property-value for a given property name across an entire node-list, for example:
 
 ```js
-model.addHandler([p('names').from(nodes.p('name'))], ['allNames'], function(in, out, current) {
+model.addHandler([nodes.p('name').as('names')], ['allNames'], function(in, out, current) {
 	out.allNames = in.names.join(', ');
 });
 ```
@@ -313,6 +318,9 @@ function WebSocketHandler(server) {
   this.dispose = function() {
     connection.close();
   };
+
+  this.inputs = [];
+  this.outputs = ['data'];
 }
 ```
 
@@ -325,31 +333,37 @@ There are a number of interesting things worth nothing about this code sample:
 
 ## Using A Handler Multiple Times
 
-If you need to attach multiple instances of the same handler to a node, you can use `p()` to prefix the properties, for example:
+If you need to attach multiple instances of the same handler to a node, you can use `p()` and `as()` to prefix the properties, for example:
 
 ```js
-model.addHandler([], [p('prop1').from('foo-prop1'), p('prop2').from('foo-prop2')], hander);
-model.addHandler([], [p('prop1').from('bar-prop1'), p('prop2').from('bar-prop2')], hander);
+model.addHandler([], [model.p('x-prop1').as('prop1'), model.p('x-prop2').as('prop2')], hander);
+model.addHandler([], [model.p('y-prop1').as('prop1'), model.p('y-prop2').as('prop2')], hander);
 ```
 
-but this becomes inconvenient when the handler has lots of properties that need prefixing. To help with this, the `ps()` method can be used to prefix all properties en-masse, as follows:
+but this becomes inconvenient when the handler has lots of properties that need prefixing. To help with this, the `props()` method can be used to prefix all properties en-masse, as follows:
 
 ```js
-model.addHandler([], [ps(handler.outputs).prefixedWith('foo-')], hander);
-model.addHandler([], [ps(handler.outputs).prefixedWith('bar-')], hander);
+model.addHandler([], [composerjs.props(handler.outputs).prefixedWith('x-')], hander);
+model.addHandler([], [composerjs.props(handler.outputs).prefixedWith('y-')], hander);
 ```
 
-A related feature of `ps()` is its `relativeTo()` method, that allows a list of property definitions to be made relative to some node, as though they had been specified with `node.p()`. This is useful for handlers within node-lists where the input-properties for that handler are available in the parent node, or some other node, for example:
+A related feature of `props()` is its `relativeTo()` method, that allows a list of property definitions to be made relative to some node, as though they had been specified with `node.p()`. This is useful for handlers within node-lists where the input-properties for that handler are available in the parent node, or some other node, for example:
 
 ```js
-model.nodes.addHandler([], [ps(handler.outputs).relativeTo(model)], hander);
+model.nodes.addHandler([], [composerjs.props(handler.outputs).relativeTo(model)], hander);
 ```
 
 If you don't want all of the properties to be relative to the given node, you can use `for()` or `excluding()` to either whitelist or blacklist which properties will be affected, for example:
 
 ```js
-ps(handler.inputs).relativeTo(model).for('only-this-property');
-ps(handler.outputs).relativeTo(model).exluding('not-this-property');
+composerjs.props(handler.inputs).relativeTo(model).for('only-this-property');
+composerjs.props(handler.outputs).relativeTo(model).exluding('not-this-property');
+```
+
+Finally, invoking `props()` without arguments up-converts a list of _strings_, _properties_ and _property-specifiers_ to a list containing all _property-specifiers_, for example:
+
+```js
+composerjs.props(['prop1', model.p('prop2'), node.p('prop3').as('x')]);
 ```
 
 
