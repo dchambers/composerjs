@@ -245,7 +245,7 @@ model.nodes.addNode();
 
 ### NodeList Properties
 
-Unlike normal nodes, nodes within node-lists don't have a `p()` method, and the `p()` method is available on the node-list instead. When used to request an input-property, the input-property received is an array containing every property-value for a given property name across an entire node-list, for example:
+Unlike normal nodes, nodes within node-lists don't have a `p()` method, and `p()` is available on the node-list instead. When used as an input-property for a handler, the the handler receives an array containing the values for all nodes within the node-list, for example:
 
 ```js
 model.addHandler([nodes.p('name').as('names')], ['allNames'], function(in, out, current) {
@@ -253,7 +253,7 @@ model.addHandler([nodes.p('name').as('names')], ['allNames'], function(in, out, 
 });
 ```
 
-Here, node-list properties can't be used as output-properties.
+Alternatively, when used as an output-property, the handler is provided an `index` parameter and `current` becomes an array, as described earlier.
 
 In addition to listening to properties directly on the nodes within a node-list, it's also possible to listen to properties that are on a sub-node within these nodes, for example:
 
@@ -261,7 +261,7 @@ In addition to listening to properties directly on the nodes within a node-list,
 model.nodes.childNode.p('prop');
 ```
 
-or even properties on grandchild nodes, for example:
+plus node-lists can be navigated to via other node-lists, for example:
 
 ```js
 model.nodes.morenodes.p('prop');
