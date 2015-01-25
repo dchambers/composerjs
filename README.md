@@ -253,7 +253,7 @@ model.addHandler([nodes.p('name').as('names')], ['allNames'], function(in, out, 
 });
 ```
 
-Alternatively, when used as an output-property, the handler is provided an `index` parameter and `current` becomes an array, as described earlier.
+Alternatively, when used as an output-property, the handler is provided an `index` parameter and `current` becomes an array, as described earlier. Note, however, node-list output properties can only used if the handler is being added to the same node-list as the property is for.
 
 In addition to listening to properties directly on the nodes within a node-list, it's also possible to listen to properties that are on a sub-node within these nodes, for example:
 
