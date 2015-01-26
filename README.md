@@ -294,7 +294,7 @@ If we later need to add a 'triangle' node to the beginning of the list, we can d
 model.nodes.addNode('triangle', 0);
 ```
 
-In this example, while `model.shapes.p('area')` could be used to refer to the `area` property that all shape nodes have, `model.shapes.p('radius')` could not be used to refer to the `radius` property, since not all shape nodes have a `radius` property.
+In this example, while `model.shapes.p('area')` could be used to refer to the `area` property that all shape nodes have, `model.shapes.p('radius')` could not be used to refer to the `radius` property, since not all shape nodes have a `radius` property, and `model.shapes('circle').p('radius')` would have to be used instead.
 
 
 ## Externally Updated Handlers
