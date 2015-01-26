@@ -10,7 +10,7 @@ function RateHandler(side, fieldMap) {
 
   this._side = side;
   this._subscriber = new Subscriber(this.inputs.map(function(field) {
-    return (fieldMap[field]) ? fieldMap[field] : field
+    return (fieldMap[field]) ? fieldMap[field] : field;
   }));
 }
 

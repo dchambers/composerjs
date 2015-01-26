@@ -2,11 +2,11 @@
 
 var composerjs = require('composerjs');
 var currencyHandler = require('../currency-handler/currencyHandler');
+var dealtCurrencyHandler = require('../currency-handler/dealtCurrencyHandler');
 var multiLegTenorHandler = require('../tenor-handler/multiLegTenorHandler');
 var RateHandler = require('../rate-handler/RateHandler');
 
 function TicketModel(currencyPair) {
-  this._dealtCurrencyHandler = new DealtCurrencyHandler();
   var bidRateHandler = new RateHandler('bid');
   bidRateHandler.inputs = composerjs.props(bidRateHandler.inputs).relativeTo(this).excluding('currencyPair');
   var askRateHandler = new RateHandler('ask');
@@ -15,9 +15,10 @@ function TicketModel(currencyPair) {
   composerjs.mixinTo(this);
   this.addNodeList('legs');
   this.addHandler(currencyHandler);
-  this.addHandler(this._dealtCurrencyHandler);
+  this.addHandler(dealtCurrencyHandler);
   this.legs.addHandler(bidRateHandler);
   this.legs.addHandler(askRateHandler);
+  this.set('useBaseCurrency', true);
   this.legs.set('tenor', 'spot');
   this.legs.set('amount', 1);
   this.set('type', 'outright');
@@ -37,7 +38,7 @@ function TicketModel(currencyPair) {
 }
 
 TicketModel.prototype.switchDealtCurrency() {
-  this._dealtCurrencyHandler.switch();
+  this.set('useBaseCurrency', !this.get('useBaseCurrency'));
 };
 
 module.exports = TicketModel;

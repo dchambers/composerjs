@@ -6,6 +6,6 @@ function currencyHandler(in, out, current) {
 }
 
 currencyHandler.inputs = ['currencyPair'];
-currencyHandler.outputs = ['baseCurrency'];
+currencyHandler.outputs = ['baseCurrency', 'termCurrency'];
 
 module.exports = currencyHandler;

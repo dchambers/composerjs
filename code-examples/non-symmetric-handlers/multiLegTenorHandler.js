@@ -13,7 +13,7 @@ function multiLegTenorHandler(in, out, current, index) {
 }
 
 function isTenorLessThan(tenor1, tenor2) {
-  // Note: this function is currently incorrectly implemented
+  // Note: this function isn't correctly implemented, but is indicative of what should exist
   return tenor < tenor2;
 }
 
