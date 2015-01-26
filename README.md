@@ -360,10 +360,10 @@ composerjs.props(handler.inputs).relativeTo(model).for('only-this-property');
 composerjs.props(handler.outputs).relativeTo(model).exluding('not-this-property');
 ```
 
-Finally, invoking `props()` without arguments up-converts a list of _strings_, _properties_ and _property-specifiers_ to a list containing all _property-specifiers_, for example:
+Finally, the `normalize()` method can be used to up-convert a list of _strings_, _properties_ and _property-specifiers_ to a list containing only _property-specifiers_, for example:
 
 ```js
-composerjs.props(['prop1', model.p('prop2'), node.p('prop3').as('x')]);
+composerjs.props(['prop1', model.p('prop2'), node.p('prop3').as('x')]).normalize(node);
 ```
 
 
