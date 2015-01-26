@@ -1,7 +1,5 @@
 'use strict';
 
-var p = require('composerjs').p;
-
 function DealtCurrencyHandler() {
   this._baseCurrency = true;
 

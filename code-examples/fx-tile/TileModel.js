@@ -1,8 +1,6 @@
 'use strict';
 
 var composerjs = require('composerjs');
-var p = composerjs.p;
-var ps = composerjs.ps;
 var currencyHandler = require('../currency-handler/currencyHandler');
 var DealturrencyHandler = require('../currency-handler/DealtCurrencyHandler');
 var RateHandler = require('../rate-handler/RateHandler');

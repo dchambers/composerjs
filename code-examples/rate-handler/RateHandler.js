@@ -1,6 +1,5 @@
 'use strict';
 
-var p = require('composerjs').p;
 var Subscriber = require('./Subscriber');
 
 function RateHandler(side, fieldMap) {
