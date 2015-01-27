@@ -279,7 +279,7 @@ Notice how in the handler example above, the properties can optionally come from
 
 ### Interacting With Optional Nodes
 
-Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked yet) until `create()` is invoked after the model has been sealed.
+Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked yet) until the model has been sealed and `create()` has been invoked.
 
 There are precisely three methods available for use with optional nodes:
 
