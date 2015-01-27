@@ -281,10 +281,11 @@ Notice how in the handler example above, the properties can optionally come from
 
 Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked yet) until `create()` is invoked after the model has been sealed.
 
-There are precisely two methods available for use with optional nodes:
+There are precisely three methods available for use with optional nodes:
 
+  * `exists()` (whether the node currently exists or not)
   * `create()` (causes the node to come into existence)
-  * `dispose()` (effectively removes the node again)
+  * `dispose()` (causes the node to cease existing)
 
 
 ## Repeated Tree Elements
@@ -567,4 +568,3 @@ model.on('beforechange', function(model) {
   }
 });
 ```
-
