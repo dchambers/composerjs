@@ -255,21 +255,37 @@ function MyModel() {
 
 ## Tree Shaped Models
 
-Tree shaped models can be created using the `addNode()` and `addNodeList()` methods. The `addNode()` method allows a single sub-node to be added to an existing model node, for example:
+Tree shaped models can be created using the `addOptionalNode()` and `addNodeList()` methods. The `addOptionalNode()` method allows a single sub-node to be added to an existing model node, for example:
 
 ```js
-model.addNode('node');
+model.addOptionalNode('node');
 ```
 
-which causes the new model node to be immediately accessible as `model.node`, allowing handlers to create or depend on the properties of the sub-node, for example:
+which causes the new model node to be immediately accessible as `model.node`, allowing handlers to be registered on the node, for example:
 
 ```js
-model.node.addHandler(p('value1').as('x'), p('value2').as('y')], ['product'], function(input, output, current) {
+model.node.addHandler(p('../value1').as('x'), p('../value2').as('y')], ['product'], function(input, output, current) {
 	output.product = input.x * input.y;
 });
 ```
 
-Notice here how the properties can optionally come from remote parts of the model.
+and initial values to be set, for example:
+
+```js
+model.node.set('some-prop', 'some-value');
+```
+
+Notice how in the handler example above, the properties can optionally come from remote parts of the model.
+
+
+### Interacting With Optional Nodes
+
+Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked yet) until `create()` is invoked after the model has been sealed.
+
+There are precisely two methods available for use with optional nodes:
+
+  * `create()` (causes the node to come into existence)
+  * `dispose()` (effectively removes the node again)
 
 
 ## Repeated Tree Elements
