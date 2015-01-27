@@ -30,7 +30,6 @@ model.addHandler(['value1', 'value2'], ['sum'], function(input, output, current)
 
 where the first two arguments are used to provide the set of input and output properties to be used by the handler.
 
-Since composable models are useful precisely because they increase re-usabilty, it will often be the case that the property names used within the handler don't correlate with the names used by the model, in which case the `as()` method can be used for translation.
 
 For example, if our summation handler is defined like this:
 
@@ -337,11 +336,7 @@ When used as an input-property for a handler, the the handler receives an array 
 ```js
 model.addHandler([p('nodes/name').as('names')], ['allNames'], function(input, output, current) {
   output.allNames = input.names.join(', ');
-});
 ```
-
-Alternatively, when used as an output-property, the handler is provided an `index` parameter and `current` becomes an array, as described earlier. Note, however, node-list output properties can only used if the handler is being added to the same node-list as the property is for.
-
 In addition to listening to properties directly on the nodes within a node-list, it's also possible to listen to properties that are on a sub-node within these nodes, for example:
 
 ```js
@@ -351,8 +346,16 @@ p('nodes/childNode/prop');
 plus node-lists can be navigated to via other node-lists, for example:
 
 ```js
+p('nodes/childNode/prop');
+```
+
+When used as an input-property for a handler, the the handler receives an array containing the values for all nodes within the node-list, for example:
+
+```js
 p('nodes/morenodes/prop');
 ```
+
+Alternatively, when used as an output-property, the handler is provided an `index` parameter and `current` becomes an array, as described earlier. Note, however, node-list output properties can only used if the handler is being added to the same node-list as the property is for.
 
 
 ### Specialized Types
@@ -564,3 +567,4 @@ model.on('beforechange', function(model) {
   }
 });
 ```
+
