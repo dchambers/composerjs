@@ -10,7 +10,7 @@ function rateHandler(side, fieldMap) {
 
     state.subscriber.requestSubject('/FX/' + input.currencyPair + '/' + input.tenor + '/' + this._side + '/' + input.amount, function(data) {
       output.rate = data.rate;
-      output.hasBeenUpdated();
+      output.markAsUpdated();
     });
   };
 

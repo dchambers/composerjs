@@ -302,7 +302,7 @@ In this example, while `model.shapes.p('area')` could be used to refer to the `a
 
 ## Externally Updated Handlers
 
-Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using `output.hasBeenUpdated()`. For example, a `webSocketHandler` handler might be implemented as follows:
+Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using `output.markAsUpdated()`. For example, a `webSocketHandler` handler might be implemented as follows:
 
 ```js
 function webSocketHandler(server) {
@@ -311,7 +311,7 @@ function webSocketHandler(server) {
 
     state.connection.onmessage = function(event) {
       output.data = event.data;
-      output.hasBeenUpdated();
+      output.markAsUpdated();
     };
   }
 
@@ -333,7 +333,7 @@ function webSocketHandler(server) {
 There are a number of interesting things worth nothing about this code sample:
 
   1. The handler initially sets the `data` property to `null`, so that downstream handlers know that the property is currently unavailable.
-  2. The handler then repeatedly invokes `output.hasBeenUpdated()` after each time it updates `output.data`.
+  2. The handler then repeatedly invokes `output.markAsUpdated()` after each time it updates `output.data`.
   3. The handler provides `initState()` and `disposeState()` method to perform resource allocation and de-allocation.
 
 
