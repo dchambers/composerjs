@@ -144,18 +144,21 @@ function(input, output, current) {
 where `input`, `output` & `current` are maps of properties. The `current` property is very similar to `output`, except that it contains values based on the models state before any of the handlers were executed. It is of most importance to handlers whose output-properties may be updated externally using the `set()` method.
 
 
-## Handler Objects
+## Stateful Handlers
 
-Handlers can be either functions or objects, where handler objects make their handler function available using a `handler` property. For example, the `summationHandler` function defined previously could instead be defined as an object as follows:
+Regular handlers are completely stateless, and this allows handler instances to be re-used throughout the model as necessary. Handlers that require to state to work can use the `initState()` and `disposeState()` methods, as follows:
 
 ```js
-function SummationHandler() {
-  this.inputs = ['x', 'y'];
-  this.outputs = ['sum'];
+function updateCounterHandler(input, output, current, state) {
+  output.updateCounter = state.counter++;
 }
 
-SummationHandler.prototype.handler = function(input, output, current) {
-  output.sum = input.x + input.y;
+updateCounterHandler.initState = function(state) {
+  state.counter = 1;
+};
+
+updateCounterHandler.disposeState = function(state) {
+  // nothing to do here
 };
 ```
 
@@ -299,28 +302,31 @@ In this example, while `model.shapes.p('area')` could be used to refer to the `a
 
 ## Externally Updated Handlers
 
-Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using `output.hasBeenUpdated()`. For example, a `WebSocketHandler` class might be implemented as follows:
+Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using `output.hasBeenUpdated()`. For example, a `webSocketHandler` handler might be implemented as follows:
 
 ```js
-function WebSocketHandler(server) {
-  var connection;
-
-  this.handler = function(input, output, current) {
+function webSocketHandler(server) {
+  var handler = function(input, output, current, state) {
     output.data = null;
-    connection = new WebSocket(server);
 
-    connection.onmessage = function(event) {
+    state.connection.onmessage = function(event) {
       output.data = event.data;
       output.hasBeenUpdated();
     };
   }
 
-  this.dispose = function() {
-    connection.close();
+  handler.inputs = [];
+  handler.outputs = ['data'];
+
+  handler.initState = function(state) {
+    state.connection = new WebSocket(server);
   };
 
-  this.inputs = [];
-  this.outputs = ['data'];
+  handler.disposeState = function(state) {
+    state.connection.close();
+  };
+
+  return handler;
 }
 ```
 
@@ -328,7 +334,7 @@ There are a number of interesting things worth nothing about this code sample:
 
   1. The handler initially sets the `data` property to `null`, so that downstream handlers know that the property is currently unavailable.
   2. The handler then repeatedly invokes `output.hasBeenUpdated()` after each time it updates `output.data`.
-  3. The handler provides a `dispose()` method that enables it to perform any resource de-allocation.
+  3. The handler provides `initState()` and `disposeState()` method to perform resource allocation and de-allocation.
 
 
 ## Using A Handler Multiple Times
