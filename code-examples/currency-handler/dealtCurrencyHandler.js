@@ -1,11 +1,11 @@
 'use strict';
 
-function dealtCurrencyHandler(in, out, current) {
-  if(in.useBaseCurrency) {
-    out.dealtCurrency = in.baseCurrency;
+function dealtCurrencyHandler(input, output, current) {
+  if(input.useBaseCurrency) {
+    output.dealtCurrency = input.baseCurrency;
   }
   else {
-    out.dealtCurrency = in.termCurrency;
+    output.dealtCurrency = input.termCurrency;
   }
 }
 

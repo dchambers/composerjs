@@ -23,8 +23,8 @@ var model = composerjs.create();
 after which you can add handlers to the model, such as the following summation handler:
 
 ```js
-model.addHandler(['value1', 'value2'], ['sum'], function(in, out, current) {
-	out.sum = in.value1 + in.value2;
+model.addHandler(['value1', 'value2'], ['sum'], function(input, output, current) {
+	output.sum = input.value1 + input.value2;
 });
 ```
 
@@ -35,8 +35,8 @@ Since composable models are useful precisely because they increase re-usabilty, 
 For example, if our summation handler is defined like this:
 
 ```js
-function summationHandler(in, out, current) {
-	out.sum = in.x + in.y;
+function summationHandler(input, output, current) {
+	output.sum = input.x + input.y;
 }
 summationHandler.inputs = ['x', 'y'];
 summationHandler.outputs = ['sum'];
@@ -136,12 +136,12 @@ model.p('answer').on('change', function(value) {
 Handler functions normally look like this:
 
 ```js
-function(in, out, current) {
+function(input, output, current) {
   // ...
 }
 ```
 
-where `in`, `out` & `current` are maps of properties. The `current` property is very similar to `out`, except that it contains values based on the models state before any of the handlers were executed. It is of most importance to handlers whose output-properties may be updated externally using the `set()` method.
+where `input`, `output` & `current` are maps of properties. The `current` property is very similar to `output`, except that it contains values based on the models state before any of the handlers were executed. It is of most importance to handlers whose output-properties may be updated externally using the `set()` method.
 
 
 ## Handler Objects
@@ -154,8 +154,8 @@ function SummationHandler() {
   this.outputs = ['sum'];
 }
 
-SummationHandler.prototype.handler = function(in, out, current) {
-  out.sum = in.x + in.y;
+SummationHandler.prototype.handler = function(input, output, current) {
+  output.sum = input.x + input.y;
 };
 ```
 
@@ -199,8 +199,8 @@ model.addNode('node');
 which causes the new model node to be immediately accessible as `model.node`, allowing handlers to create or depend on the properties of the sub-node, for example:
 
 ```js
-model.node.addHandler(model.p('value1').as('x'), model.p('value2').as('y')], ['product'], function(in, out, current) {
-	out.product = in.x * in.y;
+model.node.addHandler(model.p('value1').as('x'), model.p('value2').as('y')], ['product'], function(input, output, current) {
+	output.product = input.x * input.y;
 });
 ```
 
@@ -213,8 +213,8 @@ Quite often, models have multiple nodes with exactly the same shape, but where t
 
 ```js
 model.addNodeList('nodes');
-model.nodes.addHandler([], ['name'], function(in, out, current, index) {
-	out.name = 'node #' + (index + 1);
+model.nodes.addHandler([], ['name'], function(input, output, current, index) {
+	output.name = 'node #' + (index + 1);
 });
 ```
 
@@ -248,8 +248,8 @@ model.nodes.addNode();
 Unlike normal nodes, nodes within node-lists don't have a `p()` method, and `p()` is available on the node-list instead. When used as an input-property for a handler, the the handler receives an array containing the values for all nodes within the node-list, for example:
 
 ```js
-model.addHandler([nodes.p('name').as('names')], ['allNames'], function(in, out, current) {
-	out.allNames = in.names.join(', ');
+model.addHandler([nodes.p('name').as('names')], ['allNames'], function(input, output, current) {
+	output.allNames = input.names.join(', ');
 });
 ```
 
@@ -299,19 +299,19 @@ In this example, while `model.shapes.p('area')` could be used to refer to the `a
 
 ## Externally Updated Handlers
 
-Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using `out.hasBeenUpdated()`. For example, a `WebSocketHandler` class might be implemented as follows:
+Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using `output.hasBeenUpdated()`. For example, a `WebSocketHandler` class might be implemented as follows:
 
 ```js
 function WebSocketHandler(server) {
   var connection;
 
-  this.handler = function(in, out, current) {
-    out.data = null;
+  this.handler = function(input, output, current) {
+    output.data = null;
     connection = new WebSocket(server);
 
     connection.onmessage = function(event) {
-      out.data = event.data;
-      out.hasBeenUpdated();
+      output.data = event.data;
+      output.hasBeenUpdated();
     };
   }
 
@@ -327,7 +327,7 @@ function WebSocketHandler(server) {
 There are a number of interesting things worth nothing about this code sample:
 
   1. The handler initially sets the `data` property to `null`, so that downstream handlers know that the property is currently unavailable.
-  2. The handler then repeatedly invokes `out.hasBeenUpdated()` after each time it updates `out.data`.
+  2. The handler then repeatedly invokes `output.hasBeenUpdated()` after each time it updates `output.data`.
   3. The handler provides a `dispose()` method that enables it to perform any resource de-allocation.
 
 

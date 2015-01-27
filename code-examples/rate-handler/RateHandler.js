@@ -14,12 +14,12 @@ function RateHandler(side, fieldMap) {
   }));
 }
 
-RateHandler.prototype.handler = function(in, out, current) {
-  out.rate = null;
+RateHandler.prototype.handler = function(input, output, current) {
+  output.rate = null;
 
-  this._subscriber.requestSubject('/FX/' + in.currencyPair + '/' + in.tenor + '/' + this._side + '/' + in.amount, function(data) {
-    out.rate = data.rate;
-    out.hasBeenUpdated();
+  this._subscriber.requestSubject('/FX/' + input.currencyPair + '/' + input.tenor + '/' + this._side + '/' + input.amount, function(data) {
+    output.rate = data.rate;
+    output.hasBeenUpdated();
   });
 };
 
