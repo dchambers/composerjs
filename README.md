@@ -30,7 +30,7 @@ model.addHandler(['value1', 'value2'], ['sum'], function(input, output, current)
 
 where the first two arguments are used to provide the set of input and output properties to be used by the handler.
 
-Since composable models are useful precisely because they increase re-usabilty, it will often be the case that the property names used within the handler don't correlate with the names used by the model, in which case the `from()` method can be used for translation.
+Since composable models are useful precisely because they increase re-usabilty, it will often be the case that the property names used within the handler don't correlate with the names used by the model, in which case the `as()` method can be used for translation.
 
 For example, if our summation handler is defined like this:
 
@@ -45,7 +45,7 @@ summationHandler.outputs = ['sum'];
 then we might make use of this handler as follows:
 
 ```js
-model.addHandler([model.p('value1').as('x'), model.p('value2').as('y')], summationHandler.outputs, summationHandler);
+model.addHandler([p('value1').as('x'), p('value2').as('y')], summationHandler.outputs, summationHandler);
 ```
 
 In the case where we are happy to use the same names in the model as used by the handler we could write:
@@ -60,11 +60,7 @@ or more simply:
 model.addHandler(summationHandler);
 ```
 
-The `addHandler()` method accepts lists containing:
-
-  * _property-specifiers_ (e.g. `[model.p('prop').as('prop')]`)
-  * _properties_ (e.g. `[model.p('prop')]`)
-  * _strings_ (e.g. `['prop']`)
+More information about the format of the lists that can be provided to `addHandler()` is available within the [property-specifiers](#property-specifiers) section.
 
 
 ## Sealing The Model
@@ -163,6 +159,72 @@ updateCounterHandler.disposeState = function(state) {
 ```
 
 
+## Property Specifiers
+
+The `addHandler()` method requires two lists of relative _property-specifiers_ to be provided. Property specifiers are just simple Javascript objects having a `path` and an `as` property, for example:
+
+```js
+{
+  path: 'prop1',
+  as: 'x'
+}
+```
+
+For convenience, these specifiers can be provided using the free floating `p()` method, for example:
+
+```js
+p('prop1').as('x');
+```
+
+Here are some examples of the _property-specifiers_ the fluent syntax causes to be created:
+
+```js
+p('prop1') -> {
+  path: 'prop1',
+  as: 'prop1'
+}
+
+p('prop1').as('x') -> {
+  path: 'prop1',
+  as: 'x'
+}
+
+p('../prop1').as('x') -> {
+  path: '../prop1',
+  as: 'x'
+}
+
+p('nodes/child/prop1').as('x') -> {
+  path: 'nodes/child/prop1',
+  as: 'x'
+}
+```
+
+Given a mixed list of strings and _property-specifiers_, you can convert these to a pure list of _property-specifiers_ using the `props()` method, for example:
+
+```js
+var propertySpecifiers = node.props(['prop1', p('prop2')]);
+```
+
+which is equivalent to writing:
+
+```js
+var propertySpecifiers = [p('prop1'), p('prop2')];
+```
+
+Furthermore, given a list of _property-specifiers_, you can convert these to a list of properties using the `props().resolve()` method, for example:
+
+```js
+var properties = node.props([p('prop1').as('x'), p('../prop2'), 'prop3']).resolve();
+```
+
+is equivalent to:
+
+```js
+var properties = [node.p('prop1'), node.parent().p('prop2'), node.p('prop3')];
+```
+
+
 ## Developing Within A Class
 
 Rather than developing your model in ad-hoc fashion, you will typically develop your model within a class, in which case you have two options as to how you create the composable model:
@@ -202,7 +264,7 @@ model.addNode('node');
 which causes the new model node to be immediately accessible as `model.node`, allowing handlers to create or depend on the properties of the sub-node, for example:
 
 ```js
-model.node.addHandler(model.p('value1').as('x'), model.p('value2').as('y')], ['product'], function(input, output, current) {
+model.node.addHandler(p('value1').as('x'), p('value2').as('y')], ['product'], function(input, output, current) {
 	output.product = input.x * input.y;
 });
 ```
@@ -248,27 +310,32 @@ model.nodes.addNode();
 
 ### NodeList Properties
 
-Unlike normal nodes, nodes within node-lists don't have a `p()` method, and `p()` is available on the node-list instead. When used as an input-property for a handler, the the handler receives an array containing the values for all nodes within the node-list, for example:
+Unlike normal nodes, nodes within node-lists don't have a `p()` method, and `p()` is available on the node-list instead, allowing you to abstractly refer to all properties within the node-list, for example:
 
 ```js
-model.addHandler([nodes.p('name').as('names')], ['allNames'], function(input, output, current) {
-	output.allNames = input.names.join(', ');
-});
+model.nodes.p('some-prop');
 ```
-
-Alternatively, when used as an output-property, the handler is provided an `index` parameter and `current` becomes an array, as described earlier. Note, however, node-list output properties can only used if the handler is being added to the same node-list as the property is for.
-
 In addition to listening to properties directly on the nodes within a node-list, it's also possible to listen to properties that are on a sub-node within these nodes, for example:
 
 ```js
-model.nodes.childNode.p('prop');
+p('nodes/childNode/prop');
 ```
 
 plus node-lists can be navigated to via other node-lists, for example:
 
 ```js
-model.nodes.morenodes.p('prop');
+p('nodes/morenodes/prop');
 ```
+
+When used as an input-property for a handler, the the handler receives an array containing the values for all nodes within the node-list, for example:
+
+```js
+model.addHandler([p('nodes/name').as('names')], ['allNames'], function(input, output, current) {
+  output.allNames = input.names.join(', ');
+});
+```
+
+Alternatively, when used as an output-property, the handler is provided an `index` parameter and `current` becomes an array, as described earlier. Note, however, node-list output properties can only used if the handler is being added to the same node-list as the property is for.
 
 
 ### Specialized Types
@@ -342,8 +409,8 @@ There are a number of interesting things worth nothing about this code sample:
 If you need to attach multiple instances of the same handler to a node, you can use `p()` and `as()` to prefix the properties, for example:
 
 ```js
-model.addHandler([], [model.p('x-prop1').as('prop1'), model.p('x-prop2').as('prop2')], hander);
-model.addHandler([], [model.p('y-prop1').as('prop1'), model.p('y-prop2').as('prop2')], hander);
+model.addHandler([], [p('x-prop1').as('prop1'), p('x-prop2').as('prop2')], hander);
+model.addHandler([], [p('y-prop1').as('prop1'), p('y-prop2').as('prop2')], hander);
 ```
 
 but this becomes inconvenient when the handler has lots of properties that need prefixing. To help with this, the `props()` method can be used to prefix all properties en-masse, as follows:
@@ -369,7 +436,7 @@ composerjs.props(handler.outputs).relativeTo(model).exluding('not-this-property'
 Finally, the `normalize()` method can be used to up-convert a list of _strings_, _properties_ and _property-specifiers_ to a list containing only _property-specifiers_, for example:
 
 ```js
-composerjs.props(['prop1', model.p('prop2'), node.p('prop3').as('x')]).normalize(node);
+composerjs.props(['prop1', p('../prop2'), p('prop3').as('x')]).normalize(node);
 ```
 
 
@@ -480,3 +547,4 @@ model.on('beforechange', function(model) {
   }
 });
 ```
+
