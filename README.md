@@ -501,6 +501,14 @@ model.p('prop').on('change', function(value) {
 
 Here, `value` is the new value of the property after the change.
 
+Additionally, it's also possible to register for atomic change events affecting a set of properties, like this:
+
+```js
+model.props(p('prop1'), p('prop2')).on('change', function() {
+  // ...
+});
+```
+
 
 ### Mutation Event
 
