@@ -139,22 +139,39 @@ function(input, output, current) {
 where `input`, `output` & `current` are maps of properties. The `current` property is very similar to `output`, except that it contains values based on the models state before any of the handlers were executed. It is of most importance to handlers whose output-properties may be updated externally using the `set()` method.
 
 
-## Stateful Handlers
+## Handlers Objects
 
-Regular handlers are completely stateless, and this allows handler instances to be re-used throughout the model as necessary. Handlers that require to state to work can use the `initState()` and `disposeState()` methods, as follows:
+Regular handlers are completely stateless, and this allows handler instances to be re-used throughout the model as necessary. However, handlers that require state can use `addHandlerConstructor()` instead of `addHandler()`, for example:
 
 ```js
-function updateCounterHandler(input, output, current, state) {
-  output.updateCounter = state.counter++;
+model.addHandlerConstructor(MessageCountHandler);
+```
+
+where `MessageCountHandler` is a constructor for a _handler-object_ rather than a _handler-function_, for example:
+
+```js
+function MessageCountHandler(startCount) {
+  this._messageCount = startCount || 1;
 }
 
-updateCounterHandler.initState = function(state) {
-  state.counter = 1;
+MessageCountHandler.prototype.handler = function(input, output) {
+  output.messageCount = this._messageCount++;
 };
 
-updateCounterHandler.disposeState = function(state) {
-  // nothing to do here
+MessageCountHandler.prototype.dispose = function() {
+  // no resource de-allocation necessary for this handler
 };
+
+MessageCountHandler.prototype.inputs = ['message'];
+MessageCountHandler.prototype.outputs = ['messageCount'];
+```
+
+Notice how the actual handler function is made available using the `handler` property, and that handler objects can also optionally have `dispose()` methods to allow them to perform any resource de-allocation.
+
+The `bind()` method can be used to pre-define the arguments passed into the handler constructor, for example:
+
+```js
+model.addHandlerConstructor(MessageCountHandler.bind(null, 999));
 ```
 
 
@@ -390,39 +407,35 @@ In this example, while `model.shapes.p('area')` could be used to refer to the `a
 
 ## Externally Updated Handlers
 
-Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using `output.markAsUpdated()`. For example, a `webSocketHandler` handler might be implemented as follows:
+Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using `output.markAsUpdated()`. For example, a `WebSocketHandler` handler might be implemented as follows:
 
 ```js
-function webSocketHandler(server) {
-  var handler = function(input, output, current, state) {
-    output.data = null;
-
-    state.connection.onmessage = function(event) {
-      output.data = event.data;
-      output.markAsUpdated();
-    };
-  }
-
-  handler.inputs = [];
-  handler.outputs = ['data'];
-
-  handler.initState = function(state) {
-    state.connection = new WebSocket(server);
-  };
-
-  handler.disposeState = function(state) {
-    state.connection.close();
-  };
-
-  return handler;
+function WebSocketHandler(server) {
+  this._connection = new WebSocket(server);
 }
+
+WebSocketHandler.prototype.handler = function(input, output, current) {
+  output.data = null;
+
+  this._connection.onmessage = function(event) {
+    output.data = event.data;
+    output.markAsUpdated();
+  };
+}
+
+WebSocketHandler.prototype.dispose = function() {
+  this._connection.close();
+};
+
+WebSocketHandler.prototype.inputs = [];
+WebSocketHandler.prototype.outputs = ['data'];
 ```
 
 There are a number of interesting things worth nothing about this code sample:
 
   1. The handler initially sets the `data` property to `null`, so that downstream handlers know that the property is currently unavailable.
   2. The handler then repeatedly invokes `output.markAsUpdated()` after each time it updates `output.data`.
-  3. The handler provides `initState()` and `disposeState()` method to perform resource allocation and de-allocation.
+  3. The handler provides a `dispose()` method to perform resource de-allocation.
 
 
 ## Using A Handler Multiple Times
