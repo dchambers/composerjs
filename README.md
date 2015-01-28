@@ -582,7 +582,7 @@ ComposerJs emits the following events, all of which can be registered for using 
 
 ### Change Event
 
-The `change` event fires when a properties value has changed, and is registered for as follows:
+The `change` event fires when a property's value has changed, and is registered for as follows:
 
 ```js
 model.p('prop').on('change', function(value) {
@@ -592,10 +592,18 @@ model.p('prop').on('change', function(value) {
 
 Here, `value` is the new value of the property after the change.
 
-Additionally, it's also possible to register for atomic change events affecting a set of properties, like this:
+Additionally, it's also possible to register for atomic change events affecting a set of node properties, like this:
 
 ```js
-model.props(p('prop1'), p('prop2')).on('change', function() {
+model.props(p('prop1'), p('prop2')).on('change', function(node) {
+  // ...
+});
+```
+
+or, in much the same way, for atomic change events affecting a set of node-list properties like this:
+
+```js
+model.nodes.props(p('prop1'), p('prop2')).on('change', function(node) {
   // ...
 });
 ```
