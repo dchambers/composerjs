@@ -439,6 +439,18 @@ The `destroy()` method is not affected by type specialization, and continues to 
 model.child.destroy();
 ```
 
+### Specialization Introspection
+
+Specialized nodes have a `nodeType` property that can be used to determine the type of a node, for example:
+
+```
+if(node.nodeType == 'circle') {
+  // ...
+}
+```
+
+although, much like `instanceof`, use of `nodeType` may indicate that the types _base-definition_ is incorrectly abstracted.
+
 
 ## Externally Updated Handlers
 
