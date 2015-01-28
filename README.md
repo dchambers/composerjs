@@ -589,3 +589,36 @@ model.on('beforechange', function(model) {
   }
 });
 ```
+
+
+## Recursion
+
+Optional nodes can be used to define recursive data structures with the help of the `defineAs()` method. For example, a tree of nodes could be defined like this:
+
+```js
+node.addOptionalNode('leaf1');
+node.addOptionalNode('leaf2');
+node.leaf1.defineAs(node);
+node.leaf2.defineAs(node);
+```
+
+After sealing, we could create a small tree of actual nodes using code similar to this:
+
+```js
+node.leaf1.create();
+node.leaf1.leaf1.create();
+node.leaf1.leaf2.create();
+```
+
+Finally, we could require that each node has a `value` property unique to it, and a `sum` property containing the sum of all values beneath it in the tree, for example:
+
+```js
+node.addOptionalNode('leaf1');
+node.addOptionalNode('leaf2');
+node.set('value', 1);
+node.addHandler([p('leaf1.value').as('value1'), p('leaf2.value').as('value2')], ['sum'], function(input, output) {
+  output.sum = input.value1 + input.value2;
+});
+node.leaf1.defineAs(node);
+node.leaf2.defineAs(node);
+```
