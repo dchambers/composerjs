@@ -449,7 +449,7 @@ if(node.nodeType == 'circle') {
 }
 ```
 
-although, much like `instanceof`, use of `nodeType` may indicate that the types _base-definition_ is incorrectly abstracted.
+although, much like `instanceof`, use of `nodeType` may indicate that the types base definition has been incorrectly abstracted.
 
 
 ## Externally Updated Handlers
