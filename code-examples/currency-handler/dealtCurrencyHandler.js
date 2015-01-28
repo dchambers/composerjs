@@ -9,7 +9,7 @@ function dealtCurrencyHandler(input, output, current) {
   }
 }
 
-dealtCurrencyHandler.inputs = ['currencySide', 'baseCurrency', 'termCurrency'];
+dealtCurrencyHandler.inputs = ['useBaseCurrency', 'baseCurrency', 'termCurrency'];
 dealtCurrencyHandler.outputs = ['dealtCurrency'];
 
 module.exports = dealtCurrencyHandler;

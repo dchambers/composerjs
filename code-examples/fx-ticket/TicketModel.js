@@ -7,22 +7,21 @@ var multiLegTenorHandler = require('../tenor-handler/multiLegTenorHandler');
 var RateHandler = require('../rate-handler/RateHandler');
 
 function TicketModel(currencyPair) {
-  var bidRateHandler = new RateHandler('bid');
-  bidRateHandler.inputs = composerjs.props(bidRateHandler.inputs).relativeTo(this).excluding('currencyPair');
-  var askRateHandler = new RateHandler('ask');
-  askRateHandler.inputs = composerjs.props(askRateHandler.inputs).relativeTo(this).excluding('currencyPair');
-
   composerjs.mixinTo(this);
-  this.addNodeList('legs');
-  this.addHandler(currencyHandler);
-  this.addHandler(dealtCurrencyHandler);
-  this.legs.addHandler(bidRateHandler);
-  this.legs.addHandler(askRateHandler);
   this.set('useBaseCurrency', true);
-  this.legs.set('tenor', 'spot');
-  this.legs.set('amount', 1);
   this.set('type', 'outright');
   this.set('currencyPair', currencyPair);
+  this.addHandler(currencyHandler);
+  this.addHandler(dealtCurrencyHandler);
+
+  this.addNodeList('legs');
+  this.legs.set('tenor', 'spot');
+  this.legs.set('amount', 1);
+  var rateInputs = this.legs.props(RateHandler.inputs).relativeTo('..').for('currencyPair');
+  this.legs.addHandlerConstructor(rateInputs,
+    this.props(RateHandler.outputs).prefixedWith('bid'), RateHandler.bind(null, 'bid'));
+  this.legs.addHandlerConstructor(rateInputs,
+    this.props(RateHandler.outputs).prefixedWith('ask'), RateHandler.bind(null, 'ask'));
   this.seal();
 
   this.legs.addNode();
@@ -32,7 +31,7 @@ function TicketModel(currencyPair) {
     }
     else {
       this.legs.addNode();
-      this.legs.item(1).set('tenor', this.legs.item(0).get('tenor'));
+      this.legs.item(1).set('tenor', this.legs.item(0).get('tenor')); // TODO: move this logic into a handler
     }
   });
 }

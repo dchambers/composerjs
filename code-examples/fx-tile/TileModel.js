@@ -7,14 +7,16 @@ var RateHandler = require('../rate-handler/RateHandler');
 
 function TileModel(currencyPair) {
   composerjs.mixinTo(this);
-  this.addHandler(currencyHandler);
-  this.addHandler(dealtCurrencyHandler);
-  this.addHandler(new RateHandler('bid'));
-  this.addHandler(new RateHandler('ask'));
   this.set('useBaseCurrency', true);
   this.set('tenor', 'spot');
   this.set('amount', 1);
   this.set('currencyPair', currencyPair);
+  this.addHandler(currencyHandler);
+  this.addHandler(dealtCurrencyHandler);
+  this.addHandlerConstructor(RateHandler.inputs,
+    this.props(RateHandler.outputs).prefixedWith('bid'), RateHandler.bind(null, 'bid'));
+  this.addHandlerConstructor(RateHandler.inputs,
+    this.props(RateHandler.outputs).prefixedWith('ask'), RateHandler.bind(null, 'ask'));
   this.seal();
 }
 

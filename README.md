@@ -152,7 +152,12 @@ where `MessageCountHandler` is a constructor for a _handler-object_ rather than 
 ```js
 function MessageCountHandler(startCount) {
   this._messageCount = startCount || 1;
+  this.inputs = MessageCountHandler.inputs;
+  this.outputs = MessageCountHandler.outputs;
 }
+
+MessageCountHandler.inputs = ['message'];
+MessageCountHandler.outputs = ['messageCount'];
 
 MessageCountHandler.prototype.handler = function(input, output) {
   output.messageCount = this._messageCount++;
@@ -161,9 +166,6 @@ MessageCountHandler.prototype.handler = function(input, output) {
 MessageCountHandler.prototype.dispose = function() {
   // no resource de-allocation necessary for this handler
 };
-
-MessageCountHandler.prototype.inputs = ['message'];
-MessageCountHandler.prototype.outputs = ['messageCount'];
 ```
 
 Notice how the actual handler function is made available using the `handler` property, and that handler objects can also optionally have `dispose()` methods to allow them to perform any resource de-allocation.
@@ -490,7 +492,12 @@ Some handlers may need to indicate their need to be re-executed &mdash; for exam
 ```js
 function WebSocketHandler(server) {
   this._connection = new WebSocket(server);
+  this.inputs = WebSocketHandler.inputs;
+  this.outputs = WebSocketHandler.outputs;
 }
+
+WebSocketHandler.inputs = [];
+WebSocketHandler.outputs = ['data'];
 
 WebSocketHandler.prototype.handler = function(input, output, current) {
   output.data = null;
@@ -504,9 +511,6 @@ WebSocketHandler.prototype.handler = function(input, output, current) {
 WebSocketHandler.prototype.dispose = function() {
   this._connection.close();
 };
-
-WebSocketHandler.prototype.inputs = [];
-WebSocketHandler.prototype.outputs = ['data'];
 ```
 
 There are a number of interesting things worth nothing about this code sample:
@@ -542,7 +546,7 @@ If you don't want all of the properties to be relative to the given node, you ca
 
 ```js
 model.props(handler.inputs).relativeTo(model).for('only-this-property');
-model.props(handler.outputs).relativeTo(model).exluding('not-this-property');
+model.props(handler.outputs).relativeTo(model).excluding('not-this-property');
 ```
 
 Finally, the `normalize()` method can be used to up-convert a list of _strings_, _properties_ and _property-specifiers_ to a list containing only _property-specifiers_, for example:
