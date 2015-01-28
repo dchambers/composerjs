@@ -346,7 +346,7 @@ model.nodes.addNode();
 ```
 
 
-#### NodeList Properties
+#### Node List Properties
 
 Unlike normal nodes, nodes within node-lists don't have a `p()` method, and `p()` is available on the node-list instead, allowing you to abstractly refer to all properties within the node-list, for example:
 
@@ -354,7 +354,13 @@ Unlike normal nodes, nodes within node-lists don't have a `p()` method, and `p()
 model.nodes.p('some-prop');
 ```
 
-When used as an input-property for a handler, the the handler receives an array containing the values for all nodes within the node-list, for example:
+In much the same way, _property-specifiers_ can also only ever refer to the entire list of properites, for example:
+
+```js
+p('nodes/some-prop');
+```
+
+When used as an input-property for a handler, the handler receives an array containing the values for all nodes within the node-list, for example:
 
 ```js
 model.addHandler([p('nodes/name').as('names')], ['allNames'], function(input, output, current) {
@@ -369,16 +375,10 @@ p('nodes/childNode/prop');
 plus node-lists can be navigated to via other node-lists, for example:
 
 ```js
-p('nodes/childNode/prop');
-```
-
-When used as an input-property for a handler, the the handler receives an array containing the values for all nodes within the node-list, for example:
-
-```js
 p('nodes/morenodes/prop');
 ```
 
-Alternatively, when used as an output-property, the handler is provided an `index` parameter and `current` becomes an array, as described earlier. Note, however, node-list output properties can only used if the handler is being added to the same node-list as the property is for.
+Alternatively, when used as an output-property, the handler is provided an `index` parameter and `current` becomes an array, as described earlier. Note, however, that output-properties can only specify properties for the node-list to which the handler is being added.
 
 
 ## Specialized Types
