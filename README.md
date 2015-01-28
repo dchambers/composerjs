@@ -600,25 +600,31 @@ where `model` is the root model node.
 
 ## Serialization
 
-Models can be serialized using the `stringify()` method, for example:
+Model state can be exported as JSON using the `export()` method, for example:
 
 ```js
-var serializedForm = model.stringify([model.p('prop'), model.nodes.p('child-prop')]);
+var json = model.export([model.p('prop'), model.nodes.p('child-prop')]);
 ```
 
-or if all properties are to be serialized, then simply:
+or if all properties are required, then simply:
 
 ```js
-var serializedForm = model.stringify();
+var json = model.export();
 ```
 
-and de-serialized using the `parse()` method, for example:
+and re-imported using the `set()` method, for example:
 
 ```js
-model.parse(serializedForm);
+model.set(json);
 ```
 
-The `parse()` method should be used _after_ `set()` has been invoked to provide any properties that won't be provided by handlers. Additionally, although `stringify()` and `parse()` can be used for serlialization, they can also be used as a convenient way to revert a model back to a known state.
+JSON blobs are useful because they can be used to satisfy a number of requirements:
+
+1. They allow models to easily be debugged (e.g. `console.log(model.export())`).
+2. They allow model state to be traversed and introspected (e.g. `for(key in model.export() {...}`).
+3. They still allow models to be serialized (e.g. `JSON.stringify(model.export())`).
+
+When used for serialization/deserialization you should ensure that any default values are _set_ before the serialized state is _set_.
 
 
 ## Genuine Circular Dependencies
