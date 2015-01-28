@@ -671,3 +671,9 @@ node.leaf2.defineAs(node);
 ```
 
 Notice here how the handler has guard to against `input.value1` and `input.value2`, both or either of which may be `null`.
+
+### Recursive Circular Dependency Detection
+
+Although optional nodes don't exist by default when the model is sealed, for the purposes of _circular-dependency_ detection we assume that they will exist. However, for nodes defined using `defineAs()` it's non-trivial to do, as there may be complex forms of mutual recursion and type specialization.
+
+Therefore, models using `defineAs()` may throw a `CircularDependencyError` while invoking `create()`, as the handler evaluation order is re-calculated.
