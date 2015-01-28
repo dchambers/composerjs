@@ -271,7 +271,12 @@ function MyModel() {
 
 ## Tree Shaped Models
 
-Tree shaped models can be created using the `addOptionalNode()` and `addNodeList()` methods. The `addOptionalNode()` method allows a single sub-node to be added to an existing model node, for example:
+Tree shaped models can be created using the `addOptionalNode()` and `addNodeList()` methods.
+
+
+### Optional Nodes
+
+The `addOptionalNode()` method allows a single sub-node to be added to an existing model node, for example:
 
 ```js
 model.addOptionalNode('node');
@@ -294,7 +299,7 @@ model.node.set('some-prop', 'some-value');
 Notice how in the handler example above, the properties can optionally come from remote parts of the model.
 
 
-### Interacting With Optional Nodes
+#### Interacting With Optional Nodes
 
 Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked yet) until the model has been sealed and `create()` has been invoked.
 
@@ -305,7 +310,7 @@ There are precisely three methods available for use with optional nodes:
   * `dispose()` (causes the node to cease existing)
 
 
-## Repeated Tree Elements
+### Node Lists
 
 Quite often, models have multiple nodes with exactly the same shape, but where the number of nodes can vary over the lifetime of the model. When this is the case, the `addNodeList()` method can be used, for example:
 
@@ -319,7 +324,7 @@ model.nodes.addHandler([], ['name'], function(input, output, current, index) {
 Notice here how the node-list handler is provided an additional `index` parameter that it can optionally make use of, and `current` is now a list of maps, but otherwise exactly the same handlers used for nodes can also be used for node-lists. Again, as with node handlers, it's also possible to refer to properties on remote parts of the model, but the `index` property always relates to the node on which `addHandler()` was invoked on.
 
 
-### Interacting With NodeLists
+#### Interacting With Node Lists
 
 Node-lists have four useful methods that can be used both before and after `seal()` has been invoked:
 
@@ -341,7 +346,7 @@ model.nodes.addNode();
 ```
 
 
-### NodeList Properties
+#### NodeList Properties
 
 Unlike normal nodes, nodes within node-lists don't have a `p()` method, and `p()` is available on the node-list instead, allowing you to abstractly refer to all properties within the node-list, for example:
 
@@ -376,12 +381,12 @@ p('nodes/morenodes/prop');
 Alternatively, when used as an output-property, the handler is provided an `index` parameter and `current` becomes an array, as described earlier. Note, however, node-list output properties can only used if the handler is being added to the same node-list as the property is for.
 
 
-### Specialized Types
+## Specialized Types
 
 It's sometimes useful to create node-lists that contain specialized nodes, but where all nodes within the list conform to an agreed base-type, and optional nodes that can point to one of a number possible sub-types. To enable this, optional nodes and node-list properties are also functions that can be invoked with a type argument, so that specializations can be created.
 
 
-#### Node-List Specialization
+### Node List Specialization
 
 To create a specialized node-list we might write:
 
@@ -410,7 +415,7 @@ model.nodes.addNode('triangle', 0);
 In this example, while `model.shapes.p('area')` could be used to refer to the `area` property that all shape nodes have, `model.shapes.p('radius')` could not be used to refer to the `radius` property, since not all shape nodes have a `radius` property, and `model.shapes('circle').p('radius')` would have to be used instead.
 
 
-#### Optional Node Specialization
+### Optional Node Specialization
 
 For optional nodes, the specializations are created in exactly the same way, for example:
 
