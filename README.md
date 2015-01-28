@@ -439,6 +439,37 @@ The `destroy()` method is not affected by type specialization, and continues to 
 model.child.destroy();
 ```
 
+### Specialized Handlers
+
+As a convenience, you can add handlers that will only be applied for nodes that match a particular sub-type, for example:
+
+```js
+model.shapes('triangle').addHandler(triangleHandler);
+```
+
+or:
+
+```js
+model.child('foo').addHandler(fooHandler);
+```
+
+Finally, it's worth noting that handlers that are added to the base-type are still free to depend on properties that are only available within some of the specialized types, in which case it's their responsibility to check the shape of `input`, or alternatively to perform type any checking, for example:
+
+```js
+model.nodes.addHandler(['area', 'radius', 'type'], [p('../prop')], function(input, output, current, index) {
+  if(model.nodes.item(index).nodeType == 'circle') {
+    // ...
+  }
+  else if(model.nodes.item(index).nodeType == 'triangle') {
+    // ...
+  }
+  else {
+    // ...
+  }
+};
+```
+
+
 ### Specialization Introspection
 
 Specialized nodes have a `nodeType` property that can be used to determine the type of a node, for example:
