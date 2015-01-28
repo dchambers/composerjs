@@ -17,11 +17,14 @@ function TicketModel(currencyPair) {
   this.addNodeList('legs');
   this.legs.set('tenor', 'spot');
   this.legs.set('amount', 1);
-  var rateInputs = this.legs.props(RateHandler.inputs).relativeTo('..').for('currencyPair');
-  this.legs.addHandlerConstructor(rateInputs,
-    this.props(RateHandler.outputs).prefixedWith('bid'), RateHandler.bind(null, 'bid'));
-  this.legs.addHandlerConstructor(rateInputs,
-    this.props(RateHandler.outputs).prefixedWith('ask'), RateHandler.bind(null, 'ask'));
+  this.legs.addHandlerConstructor(
+    this.legs.props(RateHandler.inputs).relativeTo('..').for('currencyPair'),
+    this.legs.props(RateHandler.outputs).prefixedWith('bid'),
+    RateHandler.bind(null, 'bid'));
+  this.legs.addHandlerConstructor(
+    this.legs.props(RateHandler.inputs).relativeTo('..').for('currencyPair'),
+    this.legs.props(RateHandler.outputs).prefixedWith('ask'),
+    RateHandler.bind(null, 'ask'));
   this.seal();
 
   this.legs.addNode();
