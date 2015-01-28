@@ -378,7 +378,12 @@ Alternatively, when used as an output-property, the handler is provided an `inde
 
 ### Specialized Types
 
-It's sometimes useful to create node-lists that contain specialized nodes, but where all nodes within the list conform to an agreed base-type. To enable this, node-list properties are also functions that can be invoked with a type argument, so that specializations can be created, for example:
+It's sometimes useful to create node-lists that contain specialized nodes, but where all nodes within the list conform to an agreed base-type, and optional nodes that can point to one of a number possible sub-types. To enable this, optional nodes and node-list properties are also functions that can be invoked with a type argument, so that specializations can be created.
+
+
+#### Node-List Specialization
+
+To create a specialized node-list we might write:
 
 ```js
 model.addNodeList('shapes');
@@ -403,6 +408,31 @@ model.nodes.addNode('triangle', 0);
 ```
 
 In this example, while `model.shapes.p('area')` could be used to refer to the `area` property that all shape nodes have, `model.shapes.p('radius')` could not be used to refer to the `radius` property, since not all shape nodes have a `radius` property, and `model.shapes('circle').p('radius')` would have to be used instead.
+
+
+#### Optional Node Specialization
+
+For optional nodes, the specializations are created in exactly the same way, for example:
+
+
+```js
+model.addOptionalNode('child');
+model.child.set('prop', 'some-value');
+model.child('foo').set('foo-prop', 'some-value');
+model.child('bar').set('bar-prop', 'some-value');
+```
+
+but where creation is handled with the `create()` method, for example:
+
+```js
+model.child.create('foo');
+```
+
+The `destroy()` method is not affected by type specialization, and continues to be invoked as:
+
+```js
+model.child.destroy();
+```
 
 
 ## Externally Updated Handlers
