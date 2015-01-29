@@ -15,7 +15,7 @@ function RateHandler(side, fieldMap) {
 RateHandler.inputs = ['amount', 'tenor', 'currencyPair'];
 RateHandler.outputs = ['rate'];
 
-RateHandler.prototype.handler = function(input, output, current, state) {
+RateHandler.prototype.handler = function(input, output, current, modified) {
   output.rate = null;
 
   this._subscriber.requestSubject('/FX/' + input.currencyPair + '/' + input.tenor + '/' + this._side + '/' + input.amount, function(data) {
@@ -24,7 +24,7 @@ RateHandler.prototype.handler = function(input, output, current, state) {
   });
 };
 
-handlerFunc.dispose = function(state) {
+handlerFunc.dispose = function() {
   this._subscriber.dispose();
 };
 
