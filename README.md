@@ -44,6 +44,7 @@ summationHandler.outputs = ['sum'];
 then we might make use of this handler as follows:
 
 ```js
+var p = require('composerjs').p;
 model.addHandler([p('value1').as('x'), p('value2').as('y')], summationHandler.outputs, summationHandler);
 ```
 
@@ -59,7 +60,7 @@ or more simply:
 model.addHandler(summationHandler);
 ```
 
-More information about the format of the lists that can be provided to `addHandler()` is available within the [property-specifiers](#property-specifiers) section.
+More information about the format of the lists that can be provided to `addHandler()` is available within the [relative property-specifiers](#relative-property-specifiers) section.
 
 
 ## Sealing The Model
@@ -99,7 +100,7 @@ model.seal();
 Although the `seal()` method ensures that _output-properties_ have been provided by at most one handler, this is not always desirable, in which case the `allowMultiplexing()` method can be invoked prior to `seal()` to loosen this restriction, as follows:
 
 ```js
-model.p('sum').allowMultiplexing();
+node.allowMultiplexing('sum');
 ```
 
 
@@ -120,7 +121,7 @@ model.set('answer', 42);
 and model observation is supported using the emitter pattern, for example:
 
 ```js
-model.p('answer').on('change', function(value) {
+model.props(['question', 'answer']).on('change', function(value) {
 	console.log("The answer is '" + value + "'.");
 });
 ```
@@ -186,13 +187,14 @@ model.addHandlerConstructor(MessageCountHandler.bind(null, 999));
 ```
 
 
-## Property Specifiers
+## Relative Property Specifiers
 
-The `addHandler()` method requires two lists of relative _property-specifiers_ to be provided. Property specifiers are just simple Javascript objects having a `path` and an `as` property, for example:
+The `addHandler()` method requires two lists of _relative-property-specifiers_ to be provided. Relative property specifiers are just simple Javascript objects having `path`, `name` and `as` properties, for example:
 
 ```js
 {
-  path: 'prop1',
+  path: [],
+  name: 'prop1',
   as: 'x'
 }
 ```
@@ -203,34 +205,44 @@ For convenience, these specifiers can be provided using the free floating `p()` 
 p('prop1').as('x');
 ```
 
-Here are some examples of the _property-specifiers_ the fluent syntax causes to be created:
+Here are some examples of the _relative-property-specifiers_ the fluent syntax causes to be created:
 
 ```js
 p('prop1') -> {
-  path: 'prop1',
+  path: [],
+  name: 'prop1',
   as: 'prop1'
 }
 
 p('prop1').as('x') -> {
-  path: 'prop1',
+  path: [],
+  name: 'prop1',
   as: 'x'
 }
 
 p('../prop1').as('x') -> {
-  path: '../prop1',
+  path: ['..'],
+  name: 'prop1',
   as: 'x'
 }
 
 p('nodes/child/prop1').as('x') -> {
-  path: 'nodes/child/prop1',
+  path: ['nodes', 'child'],
+  name: 'prop1',
+  as: 'x'
+}
+
+p('//prop1').as('x') -> {
+  path: ['/'],
+  name: 'prop1',
   as: 'x'
 }
 ```
 
-Given a mixed list of strings and _property-specifiers_, you can convert these to a pure list of _property-specifiers_ using the `props()` method, for example:
+Given a mixed list of strings and _relative-property-specifiers_, you can convert these to a pure list of _relative-property-specifiers_ using the `props()` method, for example:
 
 ```js
-var propertySpecifiers = node.props(['prop1', p('prop2')]);
+var propertySpecifiers = props(['prop1', p('prop2')]);
 ```
 
 which is equivalent to writing:
@@ -239,17 +251,22 @@ which is equivalent to writing:
 var propertySpecifiers = [p('prop1'), p('prop2')];
 ```
 
-Furthermore, given a list of _property-specifiers_, you can convert these to a list of properties using the `props().resolve()` method, for example:
+
+## Property Specifiers
+
+Given a list of _relative-property-specifiers_, you can convert these to a list of _property-specifiers_ using the `props().resolve()` method, for example:
 
 ```js
-var properties = node.props([p('prop1').as('x'), p('../prop2'), 'prop3']).resolve();
+var properties = props([p('prop1').as('x'), p('../prop2'), 'prop3']).resolve(node);
 ```
 
-is equivalent to:
+which is equivalent to:
 
 ```js
-var properties = [node.p('prop1'), node.parent().p('prop2'), node.p('prop3')];
+var properties = [{node:node, prop:'prop1'}, {node:node.parent(), prop:'prop2'}, {node:node, prop:'prop3'}];
 ```
+
+Property specifiers are used internally within ComposerJs, but the `resolve()` method has been exposed externally since it allows the actual nodes that _relative-property-specifiers_ correspond to to be determined, which may be of use to end-developers.
 
 
 ## Developing Within A Class
@@ -314,7 +331,7 @@ Notice how in the handler example above, the properties can optionally come from
 
 Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked yet) until the model has been sealed and `create()` has been invoked.
 
-There are precisely three methods available for use with optional nodes:
+There are precisely three methods available for use with optional nodes, that can be used once the model has been sealed:
 
   * `exists()` (whether the node currently exists or not)
   * `create()` (causes the node to come into existence)
@@ -332,12 +349,10 @@ model.nodes.addHandler([], ['name'], function(input, output, current, modified) 
 });
 ```
 
-Notice here how the node-list handler is provided an additional `index` parameter that it can optionally make use of, and `current` is now a list of maps, but otherwise exactly the same handlers used for nodes can also be used for node-lists. Again, as with node handlers, it's also possible to refer to properties on remote parts of the model, but the `index` property always relates to the node on which `addHandler()` was invoked on.
-
 
 #### Interacting With Node Lists
 
-Node-lists have four useful methods that can be used both before and after `seal()` has been invoked:
+Node-lists have four useful methods that can be used after `seal()` has been invoked:
 
   * `length()` (the number of nodes within the node-list)
   * `item(index)` (retrieve the node at the given `index`)
@@ -356,14 +371,6 @@ or add a new node to the end of a node-list like this:
 model.nodes.addNode();
 ```
 
-
-#### Node List Input Properties
-
-Unlike normal nodes, nodes within node-lists don't have a `p()` method, and `p()` is available on the node-list instead, allowing you to abstractly refer to all properties within the node-list, for example:
-
-```js
-model.nodes.p('some-prop');
-```
 
 #### Node List Handlers
 
@@ -422,7 +429,7 @@ model.addHandler([p('nodes/name').asList().as('names')], ['allNames'], function(
 
 ## Specialized Types
 
-It's sometimes useful to create node-lists that contain specialized nodes, but where all nodes within the list conform to an agreed base-type, and optional nodes that can point to one of a number possible sub-types. To enable this, optional nodes and node-list properties are also functions that can be invoked with a type argument, so that specializations can be created.
+It's sometimes useful to create node-lists that contain specialized nodes (but where all nodes within the list conform to an agreed base-type), and optional nodes that can point to one of a number possible sub-types. To enable this, optional nodes and node-list properties are also functions that can be invoked with a type argument, so that specializations can be created.
 
 
 ### Node List Specialization
@@ -450,8 +457,6 @@ If we later need to add a 'triangle' node to the beginning of the list, we can d
 ```js
 model.nodes.addNode('triangle', 0);
 ```
-
-In this example, while `model.shapes.p('area')` could be used to refer to the `area` property that all shape nodes have, `model.shapes.p('radius')` could not be used to refer to the `radius` property, since not all shape nodes have a `radius` property, and `model.shapes('circle').p('radius')` would have to be used instead.
 
 
 ### Optional Node Specialization
@@ -569,27 +574,21 @@ model.addHandler([], [p('y-prop1').as('prop1'), p('y-prop2').as('prop2')], hande
 but this becomes inconvenient when the handler has lots of properties that need prefixing. To help with this, the `props()` method can be used to prefix all properties en-masse, as follows:
 
 ```js
-model.addHandler([], [model.props(handler.outputs).prefixedWith('x-')], hander);
-model.addHandler([], [model.props(handler.outputs).prefixedWith('y-')], hander);
+model.addHandler([], [props(handler.outputs).prefixedWith('x-')], hander);
+model.addHandler([], [props(handler.outputs).prefixedWith('y-')], hander);
 ```
 
-A related feature of `props()` is its `relativeTo()` method, that allows a list of property definitions to be made relative to some node, as though they had been specified with `node.p()`. This is useful for handlers within node-lists where the input-properties for that handler are available in the parent node, or some other node, for example:
+A related feature of `props()` is its `relativeTo()` method, that allows a list of _relative-property-specifiers_ to be made relative to a given node. This is useful for handlers within node-lists where the input-properties for that handler are available in the parent node, or some other node, for example:
 
 ```js
-model.nodes.addHandler([], [model.props(handler.outputs).relativeTo(model)], hander);
+model.nodes.addHandler([], [props(handler.outputs).relativeTo(model)], hander);
 ```
 
 If you don't want all of the properties to be relative to the given node, you can use `for()` or `excluding()` to either whitelist or blacklist which properties will be affected, for example:
 
 ```js
-model.props(handler.inputs).relativeTo(model).for('only-this-property');
-model.props(handler.outputs).relativeTo(model).excluding('not-this-property');
-```
-
-Finally, the `normalize()` method can be used to up-convert a list of _strings_, _properties_ and _property-specifiers_ to a list containing only _property-specifiers_, for example:
-
-```js
-model.props(['prop1', p('../prop2'), p('prop3').as('x')]).normalize(node);
+props(handler.inputs).relativeTo(model).for('only-this-property');
+props(handler.outputs).relativeTo(model).excluding('not-this-property');
 ```
 
 
@@ -625,17 +624,7 @@ ComposerJs emits the following events, all of which can be registered for using 
 
 ### Change Event
 
-The `change` event fires when a property's value has changed, and is registered for as follows:
-
-```js
-model.p('prop').on('change', function(value) {
-  // ...
-});
-```
-
-Here, `value` is the new value of the property after the change.
-
-Additionally, it's also possible to register for atomic change events affecting a set of node properties, like this:
+The `change` event fires when any of a set of given property value have changed, and is registered for as follows:
 
 ```js
 model.props(p('prop1'), p('prop2')).on('change', function(node) {
@@ -643,7 +632,7 @@ model.props(p('prop1'), p('prop2')).on('change', function(node) {
 });
 ```
 
-or, in much the same way, for atomic change events affecting a set of node-list properties like this:
+and, in much the same way, can be used to register for node-list properties like this:
 
 ```js
 model.nodes.props(p('prop1'), p('prop2')).on('change', function(node) {
@@ -685,7 +674,7 @@ where `model` is the root model node.
 Model state can be exported as JSON using the `export()` method, for example:
 
 ```js
-var json = model.export([model.p('prop'), model.nodes.p('child-prop')]);
+var json = model.export([p('prop'), p('nodes/child-prop')]);
 ```
 
 or if all properties are required, then simply:
