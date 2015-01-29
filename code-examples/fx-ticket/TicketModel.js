@@ -15,8 +15,8 @@ function TicketModel(currencyPair) {
   this.addHandler(dealtCurrencyHandler);
 
   this.addNodeList('legs');
-  this.legs.set('tenor', 'spot');
   this.legs.set('amount', 1);
+  this.legs.addHandler(multiLegTenorHandler);
   this.legs.addHandlerConstructor(
     this.legs.props(RateHandler.inputs).relativeTo('..').for('currencyPair'),
     this.legs.props(RateHandler.outputs).prefixedWith('bid'),
@@ -34,7 +34,6 @@ function TicketModel(currencyPair) {
     }
     else {
       this.legs.addNode();
-      this.legs.item(1).set('tenor', this.legs.item(0).get('tenor')); // TODO: move this logic into a handler
     }
   });
 }

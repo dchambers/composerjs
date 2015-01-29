@@ -1,23 +1,50 @@
 'use strict';
 
-function multiLegTenorHandler(input, output, current, index) {
-  if((index > 0) && isTenorLessThan(current[index].tenor, current[index - 1].tenor)) {
-    output.tenor = current[index - 1].tenor;
-  }
-  else if((index < (current.length - 1)) && !isTenorLessThan(current[index].tenor, current[index + 1].tenor)) {
-    output.tenor = current[index + 1].tenor;
-  }
-  else {
-    output.tenor = current[index].tenor;
+var p = require('composerjs').p;
+
+// TODO: add support for broken tenors provided as ISO date strings (will require a 'businessDate'
+// input-property since the tenor days for broken tenors will tick as 'businessDate' changes)
+function multiLegTenorHandler(input, output, current, modified) {
+  verifyTenors(modified.squash());
+
+  var firstModifiedTenor = (modified.squash().length == 0) ? null : modified.squash()[0];
+  var prevValidTenor;
+
+  for(var tenorIndex of modified) {
+    var modifiedTenor = modified[tenorIndex].tenor;
+    var currentTenor = current[tenorIndex].tenor;
+
+    if(currentTenor === undefined) {
+      currentTenor = 0;
+    }
+
+    if(modifiedTenor) {
+      output[tenorIndex].tenor = modifiedTenor;
+      prevValidTenor = modifiedTenor;
+    }
+    else if(prevValidTenor) {
+      output[tenorIndex].tenor = (prevValidTenor <= currentTenor) ? currentTenor : prevValidTenor;
+      prevValidTenor = output[tenorIndex].tenor;
+    }
+    else {
+      output[tenorIndex].tenor = (firstModifiedTenor && ((currentTenor > firstModifiedTenor)) ?
+        firstModifiedTenor : currentTenor;
+    }
   }
 }
 
 multiLegTenorHandler.inputs = [];
-multiLegTenorHandler.outputs = ['tenor'];
+multiLegTenorHandler.outputs = [p('tenor').asList()];
 
-function isTenorLessThan(tenor1, tenor2) {
-  // Note: this function isn't correctly implemented, but is indicative of what should exist
-  return tenor < tenor2;
+function verifyTenors(tenors) {
+  var prevTenor;
+
+  for(var tenor in tenors {
+    if(prevTenor && (prevTenor > tenor)) {
+      throw new Error("Each successive tenor must be larger than the previous tenor but '" + prevTenor + "' > '" + tenor + "'");
+    }
+    prevTenor = tenor;
+  }
 }
 
 module.exports = multiLegTenorHandler;
