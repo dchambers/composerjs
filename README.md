@@ -23,7 +23,7 @@ var model = composerjs.create();
 after which you can add handlers to the model, such as the following summation handler:
 
 ```js
-model.addHandler(['value1', 'value2'], ['sum'], function(input, output, current) {
+model.addHandler(['value1', 'value2'], ['sum'], function(input, output, current, modified) {
 	output.sum = input.value1 + input.value2;
 });
 ```
@@ -34,7 +34,7 @@ where the first two arguments are used to provide the set of input and output pr
 For example, if our summation handler is defined like this:
 
 ```js
-function summationHandler(input, output, current) {
+function summationHandler(input, output, current, modified) {
 	output.sum = input.x + input.y;
 }
 summationHandler.inputs = ['x', 'y'];
@@ -128,15 +128,24 @@ model.p('answer').on('change', function(value) {
 
 ## Handler Functions
 
-Handler functions normally look like this:
+Handler functions look like this:
 
 ```js
-function(input, output, current) {
+function(input, output, current, modified) {
   // ...
 }
 ```
 
-where `input`, `output` & `current` are maps of properties. The `current` property is very similar to `output`, except that it contains values based on the models state before any of the handlers were executed. It is of most importance to handlers whose output-properties may be updated externally using the `set()` method.
+where `input`, `output`, `current` & `modified` are all maps of properties.
+
+The `input` map contains the set of all _input-properties_, and the `output`, `current` & `modified` maps contain the set of all _output-properties_.
+
+This is how each map works:
+
+  * `input` contains every property required by the handler.
+  * `output` starts off empty, and must be populated by the handler.
+  * `current` contains the `output` map produced by the handler the last time it was invoked, or an empty map if this is the initial invocation.
+  * `modified` contains any of the _output-properties_ that have also been provided using `set()`.
 
 
 ## Handlers Objects
@@ -159,7 +168,7 @@ function MessageCountHandler(startCount) {
 MessageCountHandler.inputs = ['message'];
 MessageCountHandler.outputs = ['messageCount'];
 
-MessageCountHandler.prototype.handler = function(input, output) {
+MessageCountHandler.prototype.handler = function(input, output, current, modified) {
   output.messageCount = this._messageCount++;
 };
 
@@ -287,7 +296,7 @@ model.addOptionalNode('node');
 which causes the new model node to be immediately accessible as `model.node`, allowing handlers to be registered on the node, for example:
 
 ```js
-model.node.addHandler(p('../value1').as('x'), p('../value2').as('y')], ['product'], function(input, output, current) {
+model.node.addHandler(p('../value1').as('x'), p('../value2').as('y')], ['product'], function(input, output, current, modified) {
 	output.product = input.x * input.y;
 });
 ```
@@ -318,7 +327,7 @@ Quite often, models have multiple nodes with exactly the same shape, but where t
 
 ```js
 model.addNodeList('nodes');
-model.nodes.addHandler([], ['name'], function(input, output, current, index) {
+model.nodes.addHandler([], ['name'], function(input, output, current, modified) {
 	output.name = 'node #' + (index + 1);
 });
 ```
@@ -348,7 +357,7 @@ model.nodes.addNode();
 ```
 
 
-#### Node List Properties
+#### Node List Input Properties
 
 Unlike normal nodes, nodes within node-lists don't have a `p()` method, and `p()` is available on the node-list instead, allowing you to abstractly refer to all properties within the node-list, for example:
 
@@ -356,31 +365,59 @@ Unlike normal nodes, nodes within node-lists don't have a `p()` method, and `p()
 model.nodes.p('some-prop');
 ```
 
-In much the same way, _property-specifiers_ can also only ever refer to the entire list of properites, for example:
+#### Node List Handlers
+
+Node-List handler functions look exactly the same as normal handler functions, for example:
 
 ```js
-p('nodes/some-prop');
+function handler(input, output, current, modified) {
+  output.x = true;
+}
+
+handler.inputs = [];
+handler.outputs = ['x'];
 ```
 
-When used as an input-property for a handler, the handler receives an array containing the values for all nodes within the node-list, for example:
+By default, the arguments provided will be exactly the same as for a regular handler, but where the handler will be called once for each node within the node-list. This allows the same handlers used with nodes to also be used for the nodes within node-lists, where this makes sense.
+
+However, some output-properties can only be created if the handler is free to contemplate the entire set of properties at the same time. Handlers that are required to work this way can use the `asList()` method to indicate any properties that need to be written simultaneously, for example:
 
 ```js
-model.addHandler([p('nodes/name').as('names')], ['allNames'], function(input, output, current) {
+function handler(input, output, current, modified) {
+  output.x = true;
+  for(var out of output) {
+    out.y = true;
+  }
+}
+
+handler.inputs = [];
+handler.outputs = ['x', p('y').asList()];
+```
+
+in which case `output`, `current` & `modified` will all be arrays.
+
+There are a number of subtleties to how handlers that have output-based list-properties can be used:
+
+  1. Such handlers can only be added to node-lists.
+  1. Any _list-properties_ within the handler must be mapped to the node on which the handler was registered, and can not be mapped to _foreign-properties_.
+  1. Handlers can have both list properties and normal properties, but any normal properties must be mapped to regular nodes, and not node-lists.
+
+
+#### Node List Input Properties
+
+Handlers are also free to use `asList()` to specify which of their input-properties must be arrays. However, unlike with output-properties, models are free to map these properties to _foriegn-nodes_ if they please, for example:
+
+```js
+node.addHandler([p('../nodes/prop')], ['out'], handler);
+```
+
+Input properties also differ in that `input` is never an array of maps; instead, any list-properties are made available as an array within the one map, for example:
+
+```js
+model.addHandler([p('nodes/name').asList().as('names')], ['allNames'], function(input, output, current, modified) {
   output.allNames = input.names.join(', ');
+}
 ```
-In addition to listening to properties directly on the nodes within a node-list, it's also possible to listen to properties that are on a sub-node within these nodes, for example:
-
-```js
-p('nodes/childNode/prop');
-```
-
-plus node-lists can be navigated to via other node-lists, for example:
-
-```js
-p('nodes/morenodes/prop');
-```
-
-Alternatively, when used as an output-property, the handler is provided an `index` parameter and `current` becomes an array, as described earlier. Note, however, that output-properties can only specify properties for the node-list to which the handler is being added.
 
 
 ## Specialized Types
@@ -458,7 +495,7 @@ model.child('foo').addHandler(fooHandler);
 Finally, it's worth noting that handlers that are added to the base-type are still free to depend on properties that are only available within some of the specialized types, in which case it's their responsibility to check the shape of `input`, or alternatively to perform type any checking, for example:
 
 ```js
-model.nodes.addHandler(['area', 'radius', 'type'], [p('../prop')], function(input, output, current, index) {
+model.nodes.addHandler(['area', 'radius', 'type'], [p('../prop')], function(input, output, current, modified) {
   if(model.nodes.item(index).nodeType == 'circle') {
     // ...
   }
@@ -499,7 +536,7 @@ function WebSocketHandler(server) {
 WebSocketHandler.inputs = [];
 WebSocketHandler.outputs = ['data'];
 
-WebSocketHandler.prototype.handler = function(input, output, current) {
+WebSocketHandler.prototype.handler = function(input, output, current, modified) {
   output.data = null;
 
   this._connection.onmessage = function(event) {
@@ -714,7 +751,7 @@ Finally, we could require that each node has a `value` property unique to it, an
 node.addOptionalNode('leaf1');
 node.addOptionalNode('leaf2');
 node.set('value', 1);
-node.addHandler([p('leaf1.value').as('value1'), p('leaf2.value').as('value2')], ['sum'], function(input, output) {
+node.addHandler([p('leaf1.value').as('value1'), p('leaf2.value').as('value2')], ['sum'], function(input, output, current, modified) {
   output.sum = (input.value1 || 0) + (input.value2 || 0);
 });
 node.leaf1.defineAs(node);
