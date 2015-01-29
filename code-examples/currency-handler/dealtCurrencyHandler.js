@@ -1,6 +1,6 @@
 'use strict';
 
-function dealtCurrencyHandler(input, output, current) {
+function dealtCurrencyHandler(input, output, current, modified) {
   if(input.useBaseCurrency) {
     output.dealtCurrency = input.baseCurrency;
   }
