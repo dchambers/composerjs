@@ -299,15 +299,15 @@ function MyModel() {
 
 ## Tree Shaped Models
 
-Tree shaped models can be created using the `addOptionalNode()` and `addNodeList()` methods.
+Tree shaped models can be created using the `addNode()` and `addNodeList()` methods.
 
 
-### Optional Nodes
+### Nodes
 
-The `addOptionalNode()` method allows a single sub-node to be added to an existing model node, for example:
+The `addNode()` method allows a single sub-node to be added to an existing model node, for example:
 
 ```js
-model.addOptionalNode('node');
+model.addNode('node');
 ```
 
 which causes the new model node to be immediately accessible as `model.node`, allowing handlers to be registered on the node, for example:
@@ -327,15 +327,17 @@ model.node.define('some-prop', 'some-value');
 Notice how in the handler example above, the properties can optionally come from remote parts of the model.
 
 
-#### Interacting With Optional Nodes
+#### Interacting With Nodes
 
-Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked yet) until the model has been sealed and `create()` has been invoked.
+Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked yet) until the model has been sealed.
 
-There are precisely three methods available for use with optional nodes, that can be used once the model has been sealed:
+There are precisely three methods available for use with nodes, that can be used once the model has been sealed:
 
   * `exists()` (whether the node currently exists or not)
   * `create()` (causes the node to come into existence)
   * `dispose()` (causes the node to cease existing)
+
+If you'd prefer the node not to exist at the point `seal()` is invoked, you can instead use `addDisabledNode()` to create the node, and then invoke `create()` on the node when you're ready for it to come into existence.
 
 
 ### Node Lists
@@ -431,7 +433,7 @@ model.addHandler([p('nodes/name').asList().as('names')], ['allNames'], function(
 
 ## Specialized Types
 
-It's sometimes useful to create node-lists that contain specialized nodes (but where all nodes within the list conform to an agreed base-type), and optional nodes that can point to one of a number possible sub-types. To enable this, optional nodes and node-list properties are also functions that can be invoked with a type argument, so that specializations can be created.
+It's sometimes useful to create node-lists that contain specialized nodes (but where all nodes within the list conform to an agreed base-type), and nodes that can point to one of a number possible sub-types. To enable this, nodes and node-list properties are also functions that can be invoked with a type argument, so that specializations can be created.
 
 
 ### Node List Specialization
@@ -461,13 +463,13 @@ model.nodes.addNode('triangle', 0);
 ```
 
 
-### Optional Node Specialization
+### Node Specialization
 
-For optional nodes, the specializations are created in exactly the same way, for example:
+For regular nodes, the specializations are created in exactly the same way, for example:
 
 
 ```js
-model.addOptionalNode('child');
+model.addNode('child');
 model.child.define('prop', 'some-value');
 model.child('foo').define('foo-prop', 'some-value');
 model.child('bar').define('bar-prop', 'some-value');
@@ -612,7 +614,7 @@ model.notifyListeners();
 
 Finally, to prevent handlers from using the public API, use of any of the _mutator_ methods  (e.g. `set()`) in the _handler-phase_ will cause an error to be thrown, and use of any of the _accessor_ methods  (e.g. `get()`) will cause a warning to be logged to the console &mdash; we limit ourselves to logging to the console since developers will often find it useful to introspect the model while they are debugging handlers.
 
-Discouraging handlers from using the public API is desirable since that would significantly reduce handler re-usability, hindering model construction via composition. A side of effect of this limitation is that it's not possible for handlers to add or remove nodes from node-lists, or bring optional nodes in and out of existence, and so these operations must instead be performed by listeners.
+Discouraging handlers from using the public API is desirable since that would significantly reduce handler re-usability, hindering model construction via composition. A side of effect of this limitation is that it's not possible for handlers to add or remove nodes from node-lists, or bring normal nodes in and out of existence, and so these operations must instead be performed by listeners.
 
 
 ## Emitted events
@@ -719,11 +721,11 @@ model.on('beforechange', function(model) {
 
 ## Recursion
 
-Optional nodes can be used to define recursive data structures with the help of the `defineAs()` method. For example, a tree of nodes could be defined like this:
+Nodes can be used to define recursive data structures with the help of the `defineAs()` method. For example, a tree of nodes could be defined like this:
 
 ```js
-node.addOptionalNode('leaf1');
-node.addOptionalNode('leaf2');
+node.addDisabledNode('leaf1');
+node.addDisabledNode('leaf2');
 node.leaf1.defineAs(node);
 node.leaf2.defineAs(node);
 ```
@@ -739,8 +741,8 @@ node.leaf1.leaf2.create();
 Finally, we could require that each node has a `value` property unique to it, and a `sum` property containing the sum of all values beneath it in the tree, for example:
 
 ```js
-node.addOptionalNode('leaf1');
-node.addOptionalNode('leaf2');
+node.addNode('leaf1');
+node.addNode('leaf2');
 node.define('value', 1);
 node.addHandler([p('leaf1.value').as('value1'), p('leaf2.value').as('value2')], ['sum'], function(input, output, current, modified) {
   output.sum = (input.value1 || 0) + (input.value2 || 0);
@@ -753,6 +755,6 @@ Notice here how the handler has guard to against `input.value1` and `input.value
 
 ### Recursive Circular Dependency Detection
 
-Although optional nodes don't exist by default when the model is sealed, for the purposes of _circular-dependency_ detection we assume that they will exist. However, for nodes defined using `defineAs()` it's non-trivial to do, as there may be complex forms of mutual recursion and type specialization.
+Although disabled nodes don't exist by default when the model is sealed, for the purposes of _circular-dependency_ detection we assume that they will exist. However, for nodes defined using `defineAs()` it's non-trivial to do, as there may be complex forms of mutual recursion and type specialization.
 
 Therefore, models using `defineAs()` may throw a `CircularDependencyError` while invoking `create()`, as the handler evaluation order is re-calculated.
