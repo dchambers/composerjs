@@ -151,7 +151,7 @@ This is how each map works:
   * `modified` contains any of the _output-properties_ that have also been provided using `set()`.
 
 
-## Handlers Objects
+## Handler Objects
 
 Regular handlers are completely stateless, and this allows handler instances to be re-used throughout the model as necessary. However, handlers that require state can use `addHandlerConstructor()` instead of `addHandler()`, for example:
 
@@ -354,7 +354,7 @@ model.nodes.addHandler([], ['name'], function(input, output, current, modified) 
 
 #### Interacting With Node Lists
 
-Node-lists have four useful methods that can be used after `seal()` has been invoked:
+Node-lists have a number of useful methods that can be used after `seal()` has been invoked:
 
   * `length()` (the number of nodes within the node-list)
   * `item(index)` (retrieve the node at the given `index`)
