@@ -7,10 +7,10 @@ var RateHandler = require('../rate-handler/RateHandler');
 
 function TileModel(currencyPair) {
   composerjs.mixinTo(this);
-  this.set('useBaseCurrency', true);
-  this.set('tenor', 0);
-  this.set('amount', 1);
-  this.set('currencyPair', currencyPair);
+  this.define('useBaseCurrency', true);
+  this.define('tenor', 0);
+  this.define('amount', 1);
+  this.define('currencyPair', currencyPair);
   this.addHandler(currencyHandler);
   this.addHandler(dealtCurrencyHandler);
   this.addHandlerConstructor(RateHandler.inputs,

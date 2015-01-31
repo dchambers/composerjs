@@ -8,14 +8,14 @@ var RateHandler = require('../rate-handler/RateHandler');
 
 function TicketModel(currencyPair) {
   composerjs.mixinTo(this);
-  this.set('useBaseCurrency', true);
-  this.set('type', 'outright');
-  this.set('currencyPair', currencyPair);
+  this.define('useBaseCurrency', true);
+  this.define('type', 'outright');
+  this.define('currencyPair', currencyPair);
   this.addHandler(currencyHandler);
   this.addHandler(dealtCurrencyHandler);
 
   this.addNodeList('legs');
-  this.legs.set('amount', 1);
+  this.legs.define('amount', 1);
   this.legs.addHandler(multiLegTenorHandler);
   this.legs.addHandlerConstructor(
     this.legs.props(RateHandler.inputs).relativeTo('..').for('currencyPair'),

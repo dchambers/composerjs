@@ -86,11 +86,11 @@ model.addHandler([], ['value1', 'value2'] someHandler);
 model.seal();
 ```
 
-or by invoking the `set()` method, which allows entirely new properties to be defined if invoked prior to `seal()`, for example:
+or by invoking the `define()` method, which also allows a default to be provided, for example:
 
 ```js
-model.set('value1', 'some-value');
-model.set('value2', 'another-value');
+model.define('value1', 'some-value');
+model.define('value2', 'another-value');
 model.seal();
 ```
 
@@ -318,10 +318,10 @@ model.node.addHandler(p('../value1').as('x'), p('../value2').as('y')], ['product
 });
 ```
 
-and initial values to be set, for example:
+and properties to be defined on the node, for example:
 
 ```js
-model.node.set('some-prop', 'some-value');
+model.node.define('some-prop', 'some-value');
 ```
 
 Notice how in the handler example above, the properties can optionally come from remote parts of the model.
@@ -438,9 +438,9 @@ To create a specialized node-list we might write:
 
 ```js
 model.addNodeList('shapes');
-model.shapes.set('area', 0); // all shapes have an 'area'
-model.shapes('circle').set('radius', 0); // circles also have a 'radius'
-model.shapes('triangle').set('type', 'equilateral'); // triangles also have a 'type'
+model.shapes.define('area', 0); // all shapes have an 'area'
+model.shapes('circle').define('radius', 0); // circles also have a 'radius'
+model.shapes('triangle').define('type', 'equilateral'); // triangles also have a 'type'
 model.seal();
 ```
 
@@ -466,9 +466,9 @@ For optional nodes, the specializations are created in exactly the same way, for
 
 ```js
 model.addOptionalNode('child');
-model.child.set('prop', 'some-value');
-model.child('foo').set('foo-prop', 'some-value');
-model.child('bar').set('bar-prop', 'some-value');
+model.child.define('prop', 'some-value');
+model.child('foo').define('foo-prop', 'some-value');
+model.child('bar').define('bar-prop', 'some-value');
 ```
 
 but where creation is handled with the `create()` method, for example:
@@ -739,7 +739,7 @@ Finally, we could require that each node has a `value` property unique to it, an
 ```js
 node.addOptionalNode('leaf1');
 node.addOptionalNode('leaf2');
-node.set('value', 1);
+node.define('value', 1);
 node.addHandler([p('leaf1.value').as('value1'), p('leaf2.value').as('value2')], ['sum'], function(input, output, current, modified) {
   output.sum = (input.value1 || 0) + (input.value2 || 0);
 });
