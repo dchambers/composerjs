@@ -166,9 +166,11 @@ model.addNode('node');
 which causes the new model node to be immediately accessible as `model.node`, allowing handlers to be registered on the node, for example:
 
 ```js
-model.node.addHandler(p('../p1').as('x'), p('../p2').as('y')], ['product'], function(input, output, current, modified) {
-	output.product = input.x * input.y;
-});
+model.node.addHandler(p('../p1').as('x'), p('../p2').as('y')], ['product'],
+	function(input, output, current, modified) {
+		output.product = input.x * input.y;
+	}
+);
 ```
 
 and properties to be defined on the node, for example:
@@ -253,9 +255,11 @@ node.addHandler([p('../nodes/prop')], ['out'], handler);
 Input properties also differ in that `input` is never an array of maps; instead, any list-properties are made available as an array within the one map, for example:
 
 ```js
-model.addHandler([p('nodes/name').asList().as('names')], ['allNames'], function(input, output, current, modified) {
-	output.allNames = input.names.join(', ');
-}
+model.addHandler([p('nodes/name').asList().as('names')], ['allNames'],
+	function(input, output, current, modified) {
+		output.allNames = input.names.join(', ');
+	}
+);
 ```
 
 
@@ -283,10 +287,11 @@ node.leaf1.leaf2.leaf2.create();
 Now, assuming we'd added the following handler to `node` before referring to it with `defineAs()`:
 
 ```js
-node.addHandler([p('leaf1.value').as('p1'), p('leaf2.value').as('p2')],
-	['sum'], function(input, output, current, modified) {
-	output.sum = (input.p1 || 0) + (input.p2 || 0);
-});
+node.addHandler([p('leaf1.value').as('p1'), p('leaf2.value').as('p2')], ['sum'],
+	function(input, output, current, modified) {
+		output.sum = (input.p1 || 0) + (input.p2 || 0);
+	}
+);
 ```
 
 then each node would now contain a sum of the values for all nodes beneath it.
@@ -653,7 +658,8 @@ var properties = props([p('prop1').as('x'), p('../prop2'), 'prop3']).resolve(nod
 which is equivalent to:
 
 ```js
-var properties = [{node:node, prop:'prop1'}, {node:node.parent(), prop:'prop2'}, {node:node, prop:'prop3'}];
+var properties = [{node:node, prop:'prop1'}, {node:node.parent(), prop:'prop2'},
+	{node:node, prop:'prop3'}];
 ```
 
 Property specifiers are used internally within ComposerJs, but the `resolve()` method has been exposed externally since it allows the actual nodes that _relative-property-specifiers_ correspond to to be determined, which may be of use to end-developers.
