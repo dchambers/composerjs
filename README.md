@@ -356,13 +356,15 @@ Node-lists have four useful methods that can be used after `seal()` has been inv
 
   * `length()` (the number of nodes within the node-list)
   * `item(index)` (retrieve the node at the given `index`)
+  * `first()` (retrieve the first node in the list)
+  * `last()` (retrieve the last node in the list)
   * `addNode(index)` (add a node, optionally at a given `index`)
   * `removeNode(index)` (remove the node at the given `index`, or the last node if no index is provided)
 
 For example, we can retrieve the `name` property of the last item within the `nodes` node-list as follows:
 
 ```js
-model.nodes.item(model.nodes.length()).get('name');
+model.nodes.last().get('name');
 ```
 
 or add a new node to the end of a node-list like this:
@@ -500,11 +502,11 @@ model.child('foo').addHandler(fooHandler);
 Finally, it's worth noting that handlers that are added to the base-type are still free to depend on properties that are only available within some of the specialized types, in which case it's their responsibility to check the shape of `input`, or alternatively to perform type any checking, for example:
 
 ```js
-model.nodes.addHandler(['area', 'radius', 'type'], [p('../prop')], function(input, output, current, modified) {
-  if(model.nodes.item(index).nodeType == 'circle') {
+model.nodes.addHandler(['area', 'radius', 'type'], [p('prop')], function(input, output, current, modified) {
+  if(output.nodeType == 'circle') {
     // ...
   }
-  else if(model.nodes.item(index).nodeType == 'triangle') {
+  else if(output..nodeType == 'triangle') {
     // ...
   }
   else {
