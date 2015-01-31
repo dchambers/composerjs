@@ -46,7 +46,7 @@ then we might make use of this handler as follows:
 ```js
 var p = require('composerjs').p;
 model.addHandler([p('p1').as('x'), p('p2').as('y')], summationHandler.outputs,
-  summationHandler);
+	summationHandler);
 ```
 
 In the case where we are happy to use the same names in the model as used by the handler we could write:
@@ -136,7 +136,7 @@ Handler functions look like this:
 
 ```js
 function(input, output, current, modified) {
-  // ...
+	// ...
 }
 ```
 
@@ -223,10 +223,10 @@ However, some output-properties can only be created if the handler is free to co
 
 ```js
 function handler(input, output, current, modified) {
-  output.x = true;
-  for(var out of output) {
-    out.y = true;
-  }
+	output.x = true;
+	for(var out of output) {
+		out.y = true;
+	}
 }
 
 handler.inputs = [];
@@ -254,7 +254,7 @@ Input properties also differ in that `input` is never an array of maps; instead,
 
 ```js
 model.addHandler([p('nodes/name').asList().as('names')], ['allNames'], function(input, output, current, modified) {
-  output.allNames = input.names.join(', ');
+	output.allNames = input.names.join(', ');
 }
 ```
 
@@ -284,8 +284,8 @@ Now, assuming we'd added the following handler to `node` before referring to it 
 
 ```js
 node.addHandler([p('leaf1.value').as('p1'), p('leaf2.value').as('p2')],
-  ['sum'], function(input, output, current, modified) {
-  output.sum = (input.p1 || 0) + (input.p2 || 0);
+	['sum'], function(input, output, current, modified) {
+	output.sum = (input.p1 || 0) + (input.p2 || 0);
 });
 ```
 
@@ -357,7 +357,7 @@ Specialized nodes have a `nodeType` property that can be used to determine the t
 
 ```
 if(node.nodeType == 'circle') {
-  // ...
+	// ...
 }
 ```
 
@@ -393,20 +393,20 @@ where `MessageCountHandler` is a constructor for a _handler-object_ rather than 
 
 ```js
 function MessageCountHandler(startCount) {
-  this._messageCount = startCount || 1;
-  this.inputs = MessageCountHandler.inputs;
-  this.outputs = MessageCountHandler.outputs;
+	this._messageCount = startCount || 1;
+	this.inputs = MessageCountHandler.inputs;
+	this.outputs = MessageCountHandler.outputs;
 }
 
 MessageCountHandler.inputs = ['message'];
 MessageCountHandler.outputs = ['messageCount'];
 
 MessageCountHandler.prototype.handler = function(input, output, current, modified) {
-  output.messageCount = this._messageCount++;
+	output.messageCount = this._messageCount++;
 };
 
 MessageCountHandler.prototype.dispose = function() {
-  // no resource de-allocation necessary for this handler
+	// no resource de-allocation necessary for this handler
 };
 ```
 
@@ -425,25 +425,25 @@ Some handlers may need to indicate their need to be re-executed &mdash; for exam
 
 ```js
 function WebSocketHandler(server) {
-  this._connection = new WebSocket(server);
-  this.inputs = WebSocketHandler.inputs;
-  this.outputs = WebSocketHandler.outputs;
+	this._connection = new WebSocket(server);
+	this.inputs = WebSocketHandler.inputs;
+	this.outputs = WebSocketHandler.outputs;
 }
 
 WebSocketHandler.inputs = [];
 WebSocketHandler.outputs = ['data'];
 
 WebSocketHandler.prototype.handler = function(input, output, current, modified) {
-  output.data = null;
+	output.data = null;
 
-  this._connection.onmessage = function(event) {
-    output.data = event.data;
-    output.hasChanged();
-  };
+	this._connection.onmessage = function(event) {
+		output.data = event.data;
+		output.hasChanged();
+	};
 }
 
 WebSocketHandler.prototype.dispose = function() {
-  this._connection.close();
+	this._connection.close();
 };
 ```
 
@@ -470,7 +470,7 @@ To prevent the need for all testing code to be asynchronous, and to cope with si
 model.notifyListeners();
 ```
 
-Finally, to prevent handlers from using the public API, use of any of the _mutator_ methods  (e.g. `set()`) in the _handler-phase_ will cause an error to be thrown, and use of any of the _accessor_ methods  (e.g. `get()`) will cause a warning to be logged to the console &mdash; we limit ourselves to logging to the console since developers will often find it useful to introspect the model while they are debugging handlers.
+Finally, to prevent handlers from using the public API, use of any of the _mutator_ methods (e.g. `set()`) in the _handler-phase_ will cause an error to be thrown, and use of any of the _accessor_ methods (e.g. `get()`) will cause a warning to be logged to the console &mdash; we limit ourselves to logging to the console since developers will often find it useful to introspect the model while they are debugging handlers.
 
 Discouraging handlers from using the public API is desirable since that would significantly reduce handler re-usability, hindering model construction via composition. A side of effect of this limitation is that it's not possible for handlers to add or remove nodes from node-lists, or bring normal nodes in and out of existence, and so these operations must instead be performed by listeners.
 
@@ -490,7 +490,7 @@ The `change` event fires when any of a set of given property value have changed,
 
 ```js
 model.props(p('prop1'), p('prop2')).on('change', function(node) {
-  // ...
+	// ...
 });
 ```
 
@@ -498,7 +498,7 @@ and, in much the same way, can be used to register for node-list properties like
 
 ```js
 model.nodes.props(p('prop1'), p('prop2')).on('change', function(node) {
-  // ...
+	// ...
 });
 ```
 
@@ -509,7 +509,7 @@ The `mutation` event fires if nodes are either added or removed from a node-list
 
 ```js
 model.nodes.on('mutation', function(nodes) {
-  // ...
+	// ...
 });
 ```
 
@@ -524,7 +524,7 @@ This event can be registered for as follows:
 
 ```js
 model.on('beforechange', function(model) {
-  // ...
+	// ...
 });
 ```
 
@@ -539,11 +539,11 @@ For example:
 
 ```js
 model.on('beforechange', function(model) {
-  var startProperty = model.get('end-prop1') + model.get('end-prop2');
+	var startProperty = model.get('end-prop1') + model.get('end-prop2');
 
-  if(startProperty != model.get('start-prop')) {
-    model.set('start-prop', startProperty);
-  }
+	if(startProperty != model.get('start-prop')) {
+		model.set('start-prop', startProperty);
+	}
 });
 ```
 
@@ -583,9 +583,9 @@ The `addHandler()` method requires two lists of _relative-property-specifiers_ t
 
 ```js
 {
-  path: [],
-  name: 'prop1',
-  as: 'x'
+	path: [],
+	name: 'prop1',
+	as: 'x'
 }
 ```
 
@@ -599,33 +599,33 @@ Here are some examples of the _relative-property-specifiers_ the fluent syntax c
 
 ```js
 p('prop1') -> {
-  path: [],
-  name: 'prop1',
-  as: 'prop1'
+	path: [],
+	name: 'prop1',
+	as: 'prop1'
 }
 
 p('prop1').as('x') -> {
-  path: [],
-  name: 'prop1',
-  as: 'x'
+	path: [],
+	name: 'prop1',
+	as: 'x'
 }
 
 p('../prop1').as('x') -> {
-  path: ['..'],
-  name: 'prop1',
-  as: 'x'
+	path: ['..'],
+	name: 'prop1',
+	as: 'x'
 }
 
 p('nodes/child/prop1').as('x') -> {
-  path: ['nodes', 'child'],
-  name: 'prop1',
-  as: 'x'
+	path: ['nodes', 'child'],
+	name: 'prop1',
+	as: 'x'
 }
 
 p('//prop1').as('x') -> {
-  path: ['/'],
-  name: 'prop1',
-  as: 'x'
+	path: ['/'],
+	name: 'prop1',
+	as: 'x'
 }
 ```
 
@@ -700,9 +700,9 @@ A class using the first approach might look like this:
 
 ```js
 function MyModel() {
-  this._model = composerjs.create();
-  this._model.addHandler(summationHandler);
-  this._model.seal();
+	this._model = composerjs.create();
+	this._model.addHandler(summationHandler);
+	this._model.seal();
 }
 ```
 
@@ -710,9 +710,9 @@ Whereas a class using the second approach would look like this:
 
 ```js
 function MyModel() {
-  composerjs.mixinTo(this);
-  this.addHandler(summationHandler);
-  this.seal();
+	composerjs.mixinTo(this);
+	this.addHandler(summationHandler);
+	this.seal();
 }
 ```
 
