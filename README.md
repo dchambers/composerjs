@@ -86,7 +86,7 @@ model.addHandler([], ['value1', 'value2'] someHandler);
 model.seal();
 ```
 
-or by invoking the `define()` method, which also allows a default to be provided, for example:
+or by invoking the `define()` method, which also a non-handler provided property to be defined, for example:
 
 ```js
 model.define('value1', 'some-value');
@@ -102,6 +102,8 @@ Although the `seal()` method ensures that _output-properties_ have been provided
 ```js
 node.allowMultiplexing('sum');
 ```
+
+This allows handlers to co-operatively provide a single property, typically with only one handler electing to provide the value at any time. If two handlers do elect to provide the same property at the same time, then the values they provide must be the same or an error will be thrown.
 
 
 ## External Model Usage
