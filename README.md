@@ -329,15 +329,13 @@ Notice how in the handler example above, the properties can optionally come from
 
 #### Interacting With Nodes
 
-Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked yet) until the model has been sealed.
-
-There are precisely three methods available for use with nodes, that can be used once the model has been sealed:
+Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked) until the model has been sealed. There are precisely three methods available for use with nodes, that can be used once the model has been sealed:
 
   * `exists()` (whether the node currently exists or not)
   * `create()` (causes the node to come into existence)
   * `dispose()` (causes the node to cease existing)
 
-If you'd prefer the node not to exist at the point `seal()` is invoked, you can instead use `addDisabledNode()` to create the node, and then invoke `create()` on the node when you're ready for it to come into existence.
+If you'd prefer the node not to exist at the point `seal()` is invoked, you can instead use `addDisabledNode()` to create the node, and then invoke `create()` on the node when you're ready for it to come into existence, though this may prevent you from discovering any circular dependency issues until _use-time_.
 
 
 ### Node Lists
@@ -752,9 +750,3 @@ node.leaf2.defineAs(node);
 ```
 
 Notice here how the handler has guard to against `input.value1` and `input.value2`, both or either of which may be `null`.
-
-### Recursive Circular Dependency Detection
-
-Although disabled nodes don't exist by default when the model is sealed, for the purposes of _circular-dependency_ detection we assume that they will exist. However, for nodes defined using `defineAs()` it's non-trivial to do, as there may be complex forms of mutual recursion and type specialization.
-
-Therefore, models using `defineAs()` may throw a `CircularDependencyError` while invoking `create()`, as the handler evaluation order is re-calculated.
