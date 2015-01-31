@@ -20,7 +20,7 @@ RateHandler.prototype.handler = function(input, output, current, modified) {
 
   this._subscriber.requestSubject('/FX/' + input.currencyPair + '/' + input.tenor + '/' + this._side + '/' + input.amount, function(data) {
     output.rate = data.rate;
-    output.markAsUpdated();
+    output.hasChanged();
   });
 };
 
