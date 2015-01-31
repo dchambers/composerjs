@@ -23,8 +23,8 @@ var model = composerjs.create();
 after which you can add handlers to the model, such as the following summation handler:
 
 ```js
-model.addHandler(['value1', 'value2'], ['sum'], function(input, output, current, modified) {
-	output.sum = input.value1 + input.value2;
+model.addHandler(['p1', 'p2'], ['sum'], function(input, output, current, modified) {
+	output.sum = input.p1 + input.p2;
 });
 ```
 
@@ -45,7 +45,8 @@ then we might make use of this handler as follows:
 
 ```js
 var p = require('composerjs').p;
-model.addHandler([p('value1').as('x'), p('value2').as('y')], summationHandler.outputs, summationHandler);
+model.addHandler([p('p1').as('x'), p('p2').as('y')], summationHandler.outputs,
+  summationHandler);
 ```
 
 In the case where we are happy to use the same names in the model as used by the handler we could write:
@@ -60,7 +61,7 @@ or more simply:
 model.addHandler(summationHandler);
 ```
 
-More information about the format of the lists that can be provided to `addHandler()` is available within the [relative property-specifiers](#relative-property-specifiers) section.
+More information about the format of the lists that can be provided to `addHandler()` is available within the [relative-property-specifiers](#relative-property-specifiers) section.
 
 
 ## Sealing The Model
@@ -77,20 +78,20 @@ The `seal()` method performs a number of model verification checks:
   2. It ensures that _output-properties_ have been provided by at most one handler.
   3. It ensures there are no circular dependencies.
 
-Given that the `seal()` method ensures that all _input-properties_ have been provided, an error would be thrown given the example code written so far, since `value1` and `value2` have yet to be provided.
+Given that the `seal()` method ensures that all _input-properties_ have been provided, an error would be thrown given the example code written so far, since `p1` and `p2` have yet to be provided.
 
 We could solve this by either adding another handler before invoking `seal()`, for example:
 
 ```js
-model.addHandler([], ['value1', 'value2'] someHandler);
+model.addHandler([], ['p1', 'p2'] someHandler);
 model.seal();
 ```
 
-or by invoking the `define()` method, which also a non-handler provided property to be defined, for example:
+or by invoking the `define()` method, which allows non-handler provided properties to be defined, for example:
 
 ```js
-model.define('value1', 'some-value');
-model.define('value2', 'another-value');
+model.define('p1', 'some-value');
+model.define('p2', 'another-value');
 model.seal();
 ```
 
@@ -106,7 +107,7 @@ node.allowMultiplexing('sum');
 This allows handlers to co-operatively provide a single property, typically with only one handler electing to provide the value at any time. If two handlers do elect to provide the same property at the same time, then the values they provide must be the same or an error will be thrown.
 
 
-## External Model Usage
+## Model Usage
 
 The current value of a property within the model can be retrieved using the `get()` method, for example:
 
@@ -139,9 +140,7 @@ function(input, output, current, modified) {
 }
 ```
 
-where `input`, `output`, `current` & `modified` are all maps of properties.
-
-The `input` map contains the set of all _input-properties_, and the `output`, `current` & `modified` maps contain the set of all _output-properties_.
+where `input`, `output`, `current` & `modified` are all maps of properties. The `input` map contains the set of all _input-properties_, and the `output`, `current` & `modified` maps contain the set of all _output-properties_.
 
 This is how each map works:
 
@@ -149,6 +148,237 @@ This is how each map works:
   * `output` starts off empty, and must be populated by the handler.
   * `current` contains the `output` map produced by the handler the last time it was invoked, or an empty map if this is the initial invocation.
   * `modified` contains any of the _output-properties_ that have also been provided using `set()`.
+
+
+## Tree Shaped Models
+
+Tree shaped models can be created using the `addNode()` and `addNodeList()` methods.
+
+
+### Nodes
+
+The `addNode()` method allows a single sub-node to be added to an existing model node, for example:
+
+```js
+model.addNode('node');
+```
+
+which causes the new model node to be immediately accessible as `model.node`, allowing handlers to be registered on the node, for example:
+
+```js
+model.node.addHandler(p('../p1').as('x'), p('../p2').as('y')], ['product'], function(input, output, current, modified) {
+	output.product = input.x * input.y;
+});
+```
+
+and properties to be defined on the node, for example:
+
+```js
+model.node.define('some-prop', 'some-value');
+```
+
+Notice how in the handler example above, the properties can optionally come from remote parts of the model.
+
+
+#### Interacting With Nodes
+
+Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked) until the model has been sealed. There are precisely three methods available for use with nodes, that can be used once the model has been sealed:
+
+  * `exists()` (whether the node currently exists or not)
+  * `create()` (causes the node to come into existence)
+  * `dispose()` (causes the node to cease existing)
+
+If you'd prefer the node not to exist at the point `seal()` is invoked, you can use `addDisabledNode()` to create the node, and then invoke `create()` on the node when you're ready for it to come into existence &mdash; though this may prevent you from discovering any circular dependency issues until _use-time_.
+
+
+### Node Lists
+
+Quite often, models have multiple nodes with exactly the same shape, but where the number of nodes can vary over the lifetime of the model. When this is the case, the `addNodeList()` method can be used, for example:
+
+```js
+model.addNodeList('nodes');
+model.nodes.addHandler([], ['name'], function(input, output, current, modified) {
+	output.name = 'node #' + (index + 1);
+});
+```
+
+
+#### Interacting With Node Lists
+
+Node-lists have a number of useful methods that can be used after `seal()` has been invoked:
+
+  * `length()` (the number of nodes within the node-list)
+  * `item(index)` (retrieve the node at the given `index`)
+  * `first()` (retrieve the first node in the list)
+  * `last()` (retrieve the last node in the list)
+  * `addNode(index)` (add a node, optionally at a given `index`)
+  * `removeNode(index)` (remove the node at the given `index`, or the last node if no index is provided)
+
+
+#### Node List Handlers
+
+Node-List handler functions look exactly the same as normal handler functions, but are invoked once for each node within the node-list, which allows the same handlers used with nodes to also be used for the nodes within node-lists, where this makes sense.
+
+However, some output-properties can only be created if the handler is free to contemplate the entire set of properties at the same time. Handlers that are required to work this way can use the `asList()` method to indicate any properties that need to be written simultaneously, for example:
+
+```js
+function handler(input, output, current, modified) {
+  output.x = true;
+  for(var out of output) {
+    out.y = true;
+  }
+}
+
+handler.inputs = [];
+handler.outputs = ['x', p('y').asList()];
+```
+
+in which case `output`, `current` & `modified` will all be arrays.
+
+There are a number of subtleties to how handlers that have output-based list-properties can be used:
+
+  1. Such handlers can only be added to node-lists.
+  1. Any _list-properties_ within the handler must be mapped to the node on which the handler was registered, and can not be mapped to _foreign-properties_.
+  1. Handlers can have both list properties and normal properties, but any normal properties must be mapped to regular nodes, and not node-lists.
+
+
+#### Node List Input Properties
+
+Handlers are also free to use `asList()` to specify which of their input-properties must be arrays. However, unlike with output-properties, models are free to map these properties to _foriegn-nodes_ if they please, for example:
+
+```js
+node.addHandler([p('../nodes/prop')], ['out'], handler);
+```
+
+Input properties also differ in that `input` is never an array of maps; instead, any list-properties are made available as an array within the one map, for example:
+
+```js
+model.addHandler([p('nodes/name').asList().as('names')], ['allNames'], function(input, output, current, modified) {
+  output.allNames = input.names.join(', ');
+}
+```
+
+
+## Recursion
+
+Nodes can be used to define recursive data structures with the help of the `defineAs()` method, which allows a node to inherit the non-handler defined properties, handlers, sub-nodes and node-lists of some other node. For example, a tree of nodes could be defined like this:
+
+```js
+node.define('value', 1);
+node.addDisabledNode('leaf1');
+node.addDisabledNode('leaf2');
+node.leaf1.defineAs(node);
+node.leaf2.defineAs(node);
+```
+
+After sealing, we could create a small node tree using code like this:
+
+```js
+node.leaf1.create();
+node.leaf1.leaf1.create();
+node.leaf1.leaf2.create();
+node.leaf1.leaf2.leaf2.create();
+```
+
+Now, assuming we'd added the following handler to `node` before referring to it with `defineAs()`:
+
+```js
+node.addHandler([p('leaf1.value').as('p1'), p('leaf2.value').as('p2')],
+  ['sum'], function(input, output, current, modified) {
+  output.sum = (input.p1 || 0) + (input.p2 || 0);
+});
+```
+
+then each node would now contain a sum of the values for all nodes beneath it.
+
+Notice here how the handler has to guard to against `input.p1` and `input.p2`, both or either of which may be `null` if the leaf nodes have not been created.
+
+
+## Specialized Types
+
+It's sometimes useful to create node-lists that contain specialized nodes (but where all nodes within the list conform to an agreed base-type), and nodes that can point to one of a number possible sub-types. To enable this, nodes and node-list properties are also functions that can be invoked with a type argument, so that specializations can be created.
+
+
+### Node List Specialization
+
+To create a specialized node-list we might write:
+
+```js
+model.addNodeList('shapes');
+model.shapes.define('area', 0); // all shapes have an 'area'
+model.shapes('circle').define('radius', 0); // circles also have a 'radius'
+model.shapes('triangle').define('type', 'equilateral'); // triangles also have a 'type'
+model.seal();
+```
+
+We can then either create standard or specialized versions of nodes depending on whether `addNode()` is invoked with a `type` argument or not:
+
+```js
+model.shapes.addNode(); // first node only has an 'area' property
+model.shapes.addNode('circle');
+model.shapes.addNode('triangle');
+```
+
+If we later need to add a 'triangle' node to the beginning of the list, we can do this as follows:
+
+```js
+model.nodes.addNode('triangle', 0);
+```
+
+
+### Node Specialization
+
+For regular nodes, the specializations are created in exactly the same way, for example:
+
+
+```js
+model.addDisabledNode('child');
+model.child.define('prop', 'some-value');
+model.child('foo').define('foo-prop', 'some-value');
+model.child('bar').define('bar-prop', 'some-value');
+```
+
+but where creation is controlled by passing a type argument to the `create()` method, for example:
+
+```js
+model.child.create('foo');
+```
+
+The `destroy()` method is not affected by type specialization, and continues to be invoked as:
+
+```js
+model.child.destroy();
+```
+
+
+### Specialization Introspection
+
+Specialized nodes have a `nodeType` property that can be used to determine the type of a node, for example:
+
+```
+if(node.nodeType == 'circle') {
+  // ...
+}
+```
+
+although, much like `instanceof`, use of `nodeType` may indicate that the types base definition has been incorrectly abstracted.
+
+
+### Specialized Handlers
+
+As a convenience, you can add handlers that will only be applied for nodes that match a particular sub-type, for example:
+
+```js
+model.shapes('triangle').addHandler(triangleHandler);
+```
+
+or:
+
+```js
+model.child('foo').addHandler(fooHandler);
+```
+
+Finally, it's worth noting that handlers that are added to the base-type are free to depend on properties that are only available within some of the specialized types, in which case it's their responsibility to check the shape of `input` before acting.
 
 
 ## Handler Objects
@@ -187,6 +417,164 @@ The `bind()` method can be used to pre-define the arguments passed into the hand
 ```js
 model.addHandlerConstructor(MessageCountHandler.bind(null, 999));
 ```
+
+
+## Externally Updated Handlers
+
+Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using `output.hasChanged()`. For example, a `WebSocketHandler` handler might be implemented as follows:
+
+```js
+function WebSocketHandler(server) {
+  this._connection = new WebSocket(server);
+  this.inputs = WebSocketHandler.inputs;
+  this.outputs = WebSocketHandler.outputs;
+}
+
+WebSocketHandler.inputs = [];
+WebSocketHandler.outputs = ['data'];
+
+WebSocketHandler.prototype.handler = function(input, output, current, modified) {
+  output.data = null;
+
+  this._connection.onmessage = function(event) {
+    output.data = event.data;
+    output.hasChanged();
+  };
+}
+
+WebSocketHandler.prototype.dispose = function() {
+  this._connection.close();
+};
+```
+
+There are a number of interesting things worth nothing about this code sample:
+
+  1. The handler initially sets the `data` property to `null`, so that downstream handlers know that the property is currently unavailable.
+  2. The handler then repeatedly invokes `output.hasChanged()` after each time it updates `output.data`.
+  3. The handler provides a `dispose()` method to perform resource de-allocation.
+
+
+## Atomicity
+
+There are three phases of action within the model:
+
+  1. The external API is used to update state, or an externally updated handler indicates the need to be re-executed.
+  2. Any implicated handlers are re-executed.
+  3. External listeners are notified.
+
+ComposerJs only notifies external listeners once all changes have been made, and achieves this by using [ASAP](https://www.npmjs.com/package/asap) to delay steps _2_ and _3_ until after the current call-stack has exited. However, in cases where step _1_ involves the use of any of the _accessor_ methods (e.g. `get()`), than step _2_ will be performed early, so that the model is in a consistent state.
+
+To prevent the need for all testing code to be asynchronous, and to cope with situations where programs may need external listeners to be notified early, a `notfiyListeners()` method is provided, which can be used as follows:
+
+```js
+model.notifyListeners();
+```
+
+Finally, to prevent handlers from using the public API, use of any of the _mutator_ methods  (e.g. `set()`) in the _handler-phase_ will cause an error to be thrown, and use of any of the _accessor_ methods  (e.g. `get()`) will cause a warning to be logged to the console &mdash; we limit ourselves to logging to the console since developers will often find it useful to introspect the model while they are debugging handlers.
+
+Discouraging handlers from using the public API is desirable since that would significantly reduce handler re-usability, hindering model construction via composition. A side of effect of this limitation is that it's not possible for handlers to add or remove nodes from node-lists, or bring normal nodes in and out of existence, and so these operations must instead be performed by listeners.
+
+
+## Emitted events
+
+ComposerJs emits the following events, all of which can be registered for using the `on()` method:
+
+  * `change`
+  * `mutation`
+  * `beforechange`
+
+
+### Change Event
+
+The `change` event fires when any of a set of given property value have changed, and is registered for as follows:
+
+```js
+model.props(p('prop1'), p('prop2')).on('change', function(node) {
+  // ...
+});
+```
+
+and, in much the same way, can be used to register for node-list properties like this:
+
+```js
+model.nodes.props(p('prop1'), p('prop2')).on('change', function(node) {
+  // ...
+});
+```
+
+
+### Mutation Event
+
+The `mutation` event fires if nodes are either added or removed from a node-list, and is registered for as follows:
+
+```js
+model.nodes.on('mutation', function(nodes) {
+  // ...
+});
+```
+
+Here, `nodes` is the array of nodes after the change.
+
+
+### Before-Change Event
+
+The `beforechange` event fires prior to the `change` and `mutation` events firing. It is useful since if `set()`, `addNode()` or `removeNode()` are invoked at this the point, the `change` and `mutation` events won't fire until the handlers have first had a chance to react to any changes.
+
+This event can be registered for as follows:
+
+```js
+model.on('beforechange', function(model) {
+  // ...
+});
+```
+
+where `model` is the root model node.
+
+
+## Genuine Circular Dependencies
+
+ComposerJs doesn't allow handlers that form circular dependencies, yet there are occasions when this is actually required. In such cases, the `beforechange` event can be used to create a circular dependency, but where the listener is responsible for ensuring that infinite loops don't occur.
+
+For example:
+
+```js
+model.on('beforechange', function(model) {
+  var startProperty = model.get('end-prop1') + model.get('end-prop2');
+
+  if(startProperty != model.get('start-prop')) {
+    model.set('start-prop', startProperty);
+  }
+});
+```
+
+
+## Serialization
+
+Model state can be exported as JSON using the `export()` method, for example:
+
+```js
+var json = model.export([p('prop'), p('nodes/child-prop')]);
+```
+
+or if all properties are required, then simply:
+
+```js
+var json = model.export();
+```
+
+and re-imported using the `set()` method, for example:
+
+```js
+model.set(json);
+```
+
+JSON blobs are useful because they can be used to satisfy a number of requirements:
+
+1. They allow models to easily be debugged (e.g. `console.log(model.export())`).
+2. They allow model state to be traversed and introspected (e.g. `for(key in model.export() {...}`).
+3. They still allow models to be serialized (e.g. `JSON.stringify(model.export())`).
+
+When used for serialization/deserialization you should ensure that any default values are _set_ before the serialized state is _set_.
 
 
 ## Relative Property Specifiers
@@ -271,301 +659,6 @@ var properties = [{node:node, prop:'prop1'}, {node:node.parent(), prop:'prop2'},
 Property specifiers are used internally within ComposerJs, but the `resolve()` method has been exposed externally since it allows the actual nodes that _relative-property-specifiers_ correspond to to be determined, which may be of use to end-developers.
 
 
-## Developing Within A Class
-
-Rather than developing your model in ad-hoc fashion, you will typically develop your model within a class, in which case you have two options as to how you create the composable model:
-
-1. `composer.create()`, when you want to keep methods like `set()` as private facets of the model you are building.
-2. `composer.mixinTo()`, when you are happy to expose methods like `set()`.
-
-A class using the first approach might look like this:
-
-```js
-function MyModel() {
-  this._model = composerjs.create();
-  this._model.addHandler(summationHandler);
-  this._model.seal();
-}
-```
-
-Whereas a class using the second approach would look like this:
-
-```js
-function MyModel() {
-  composerjs.mixinTo(this);
-  this.addHandler(summationHandler);
-  this.seal();
-}
-```
-
-
-## Tree Shaped Models
-
-Tree shaped models can be created using the `addNode()` and `addNodeList()` methods.
-
-
-### Nodes
-
-The `addNode()` method allows a single sub-node to be added to an existing model node, for example:
-
-```js
-model.addNode('node');
-```
-
-which causes the new model node to be immediately accessible as `model.node`, allowing handlers to be registered on the node, for example:
-
-```js
-model.node.addHandler(p('../value1').as('x'), p('../value2').as('y')], ['product'], function(input, output, current, modified) {
-	output.product = input.x * input.y;
-});
-```
-
-and properties to be defined on the node, for example:
-
-```js
-model.node.define('some-prop', 'some-value');
-```
-
-Notice how in the handler example above, the properties can optionally come from remote parts of the model.
-
-
-#### Interacting With Nodes
-
-Now, although `model.node` can be navigated to immediately, the node won't effectively exist (e.g. `get()` can't be invoked) until the model has been sealed. There are precisely three methods available for use with nodes, that can be used once the model has been sealed:
-
-  * `exists()` (whether the node currently exists or not)
-  * `create()` (causes the node to come into existence)
-  * `dispose()` (causes the node to cease existing)
-
-If you'd prefer the node not to exist at the point `seal()` is invoked, you can instead use `addDisabledNode()` to create the node, and then invoke `create()` on the node when you're ready for it to come into existence, though this may prevent you from discovering any circular dependency issues until _use-time_.
-
-
-### Node Lists
-
-Quite often, models have multiple nodes with exactly the same shape, but where the number of nodes can vary over the lifetime of the model. When this is the case, the `addNodeList()` method can be used, for example:
-
-```js
-model.addNodeList('nodes');
-model.nodes.addHandler([], ['name'], function(input, output, current, modified) {
-	output.name = 'node #' + (index + 1);
-});
-```
-
-
-#### Interacting With Node Lists
-
-Node-lists have a number of useful methods that can be used after `seal()` has been invoked:
-
-  * `length()` (the number of nodes within the node-list)
-  * `item(index)` (retrieve the node at the given `index`)
-  * `first()` (retrieve the first node in the list)
-  * `last()` (retrieve the last node in the list)
-  * `addNode(index)` (add a node, optionally at a given `index`)
-  * `removeNode(index)` (remove the node at the given `index`, or the last node if no index is provided)
-
-For example, we can retrieve the `name` property of the last item within the `nodes` node-list as follows:
-
-```js
-model.nodes.last().get('name');
-```
-
-or add a new node to the end of a node-list like this:
-
-```js
-model.nodes.addNode();
-```
-
-
-#### Node List Handlers
-
-Node-List handler functions look exactly the same as normal handler functions, for example:
-
-```js
-function handler(input, output, current, modified) {
-  output.x = true;
-}
-
-handler.inputs = [];
-handler.outputs = ['x'];
-```
-
-By default, the arguments provided will be exactly the same as for a regular handler, but where the handler will be called once for each node within the node-list. This allows the same handlers used with nodes to also be used for the nodes within node-lists, where this makes sense.
-
-However, some output-properties can only be created if the handler is free to contemplate the entire set of properties at the same time. Handlers that are required to work this way can use the `asList()` method to indicate any properties that need to be written simultaneously, for example:
-
-```js
-function handler(input, output, current, modified) {
-  output.x = true;
-  for(var out of output) {
-    out.y = true;
-  }
-}
-
-handler.inputs = [];
-handler.outputs = ['x', p('y').asList()];
-```
-
-in which case `output`, `current` & `modified` will all be arrays.
-
-There are a number of subtleties to how handlers that have output-based list-properties can be used:
-
-  1. Such handlers can only be added to node-lists.
-  1. Any _list-properties_ within the handler must be mapped to the node on which the handler was registered, and can not be mapped to _foreign-properties_.
-  1. Handlers can have both list properties and normal properties, but any normal properties must be mapped to regular nodes, and not node-lists.
-
-
-#### Node List Input Properties
-
-Handlers are also free to use `asList()` to specify which of their input-properties must be arrays. However, unlike with output-properties, models are free to map these properties to _foriegn-nodes_ if they please, for example:
-
-```js
-node.addHandler([p('../nodes/prop')], ['out'], handler);
-```
-
-Input properties also differ in that `input` is never an array of maps; instead, any list-properties are made available as an array within the one map, for example:
-
-```js
-model.addHandler([p('nodes/name').asList().as('names')], ['allNames'], function(input, output, current, modified) {
-  output.allNames = input.names.join(', ');
-}
-```
-
-
-## Specialized Types
-
-It's sometimes useful to create node-lists that contain specialized nodes (but where all nodes within the list conform to an agreed base-type), and nodes that can point to one of a number possible sub-types. To enable this, nodes and node-list properties are also functions that can be invoked with a type argument, so that specializations can be created.
-
-
-### Node List Specialization
-
-To create a specialized node-list we might write:
-
-```js
-model.addNodeList('shapes');
-model.shapes.define('area', 0); // all shapes have an 'area'
-model.shapes('circle').define('radius', 0); // circles also have a 'radius'
-model.shapes('triangle').define('type', 'equilateral'); // triangles also have a 'type'
-model.seal();
-```
-
-We can then either create standard or specialized versions of nodes depending on whether `addNode()` is invoked with a `type` argument or not:
-
-```js
-model.shapes.addNode(); // first node only has an 'area' property
-model.shapes.addNode('circle');
-model.shapes.addNode('triangle');
-```
-
-If we later need to add a 'triangle' node to the beginning of the list, we can do this as follows:
-
-```js
-model.nodes.addNode('triangle', 0);
-```
-
-
-### Node Specialization
-
-For regular nodes, the specializations are created in exactly the same way, for example:
-
-
-```js
-model.addNode('child');
-model.child.define('prop', 'some-value');
-model.child('foo').define('foo-prop', 'some-value');
-model.child('bar').define('bar-prop', 'some-value');
-```
-
-but where creation is handled with the `create()` method, for example:
-
-```js
-model.child.create('foo');
-```
-
-The `destroy()` method is not affected by type specialization, and continues to be invoked as:
-
-```js
-model.child.destroy();
-```
-
-### Specialized Handlers
-
-As a convenience, you can add handlers that will only be applied for nodes that match a particular sub-type, for example:
-
-```js
-model.shapes('triangle').addHandler(triangleHandler);
-```
-
-or:
-
-```js
-model.child('foo').addHandler(fooHandler);
-```
-
-Finally, it's worth noting that handlers that are added to the base-type are still free to depend on properties that are only available within some of the specialized types, in which case it's their responsibility to check the shape of `input`, or alternatively to perform type any checking, for example:
-
-```js
-model.nodes.addHandler(['area', 'radius', 'type'], [p('prop')], function(input, output, current, modified) {
-  if(output.nodeType == 'circle') {
-    // ...
-  }
-  else if(output..nodeType == 'triangle') {
-    // ...
-  }
-  else {
-    // ...
-  }
-};
-```
-
-
-### Specialization Introspection
-
-Specialized nodes have a `nodeType` property that can be used to determine the type of a node, for example:
-
-```
-if(node.nodeType == 'circle') {
-  // ...
-}
-```
-
-although, much like `instanceof`, use of `nodeType` may indicate that the types base definition has been incorrectly abstracted.
-
-
-## Externally Updated Handlers
-
-Some handlers may need to indicate their need to be re-executed &mdash; for example if they receive data from external servers &mdash; and this can be done using `output.hasChanged()`. For example, a `WebSocketHandler` handler might be implemented as follows:
-
-```js
-function WebSocketHandler(server) {
-  this._connection = new WebSocket(server);
-  this.inputs = WebSocketHandler.inputs;
-  this.outputs = WebSocketHandler.outputs;
-}
-
-WebSocketHandler.inputs = [];
-WebSocketHandler.outputs = ['data'];
-
-WebSocketHandler.prototype.handler = function(input, output, current, modified) {
-  output.data = null;
-
-  this._connection.onmessage = function(event) {
-    output.data = event.data;
-    output.hasChanged();
-  };
-}
-
-WebSocketHandler.prototype.dispose = function() {
-  this._connection.close();
-};
-```
-
-There are a number of interesting things worth nothing about this code sample:
-
-  1. The handler initially sets the `data` property to `null`, so that downstream handlers know that the property is currently unavailable.
-  2. The handler then repeatedly invokes `output.hasChanged()` after each time it updates `output.data`.
-  3. The handler provides a `dispose()` method to perform resource de-allocation.
-
-
 ## Using A Handler Multiple Times
 
 If you need to attach multiple instances of the same handler to a node, you can use `p()` and `as()` to prefix the properties, for example:
@@ -596,159 +689,30 @@ props(handler.outputs).relativeTo(model).excluding('not-this-property');
 ```
 
 
-## Atomicity
+## Developing Within A Class
 
-There are three phases of action within the model:
+Rather than developing your model in ad-hoc fashion, you will typically develop your model within a class, in which case you have two options as to how you create the composable model:
 
-  1. The external API is used to update state, or an externally updated handler indicates the need to be re-executed.
-  2. Any implicated handlers are re-executed.
-  3. External listeners are notified.
+1. `composer.create()`, when you want to keep methods like `set()` as private facets of the model you are building.
+2. `composer.mixinTo()`, when you are happy to expose methods like `set()`.
 
-ComposerJs only notifies external listeners once all changes have been made, and achieves this by using [ASAP](https://www.npmjs.com/package/asap) to delay steps _2_ and _3_ until after the current call-stack has exited. However, in cases where step _1_ involves the use of any of the _accessor_ methods (e.g. `get()`), than step _2_ will be performed early, so that the model is in a consistent state.
-
-To prevent the need for all testing code to be asynchronous, and to cope with situations where programs may need external listeners to be notified early, a `notfiyListeners()` method is provided, which can be used as follows:
+A class using the first approach might look like this:
 
 ```js
-model.notifyListeners();
+function MyModel() {
+  this._model = composerjs.create();
+  this._model.addHandler(summationHandler);
+  this._model.seal();
+}
 ```
 
-Finally, to prevent handlers from using the public API, use of any of the _mutator_ methods  (e.g. `set()`) in the _handler-phase_ will cause an error to be thrown, and use of any of the _accessor_ methods  (e.g. `get()`) will cause a warning to be logged to the console &mdash; we limit ourselves to logging to the console since developers will often find it useful to introspect the model while they are debugging handlers.
-
-Discouraging handlers from using the public API is desirable since that would significantly reduce handler re-usability, hindering model construction via composition. A side of effect of this limitation is that it's not possible for handlers to add or remove nodes from node-lists, or bring normal nodes in and out of existence, and so these operations must instead be performed by listeners.
-
-
-## Emitted events
-
-ComposerJs emits the following events, all of which can be registered for using the `on()` method:
-
-  * `change`
-  * `mutation`
-  * `beforechange`
-
-
-### Change Event
-
-The `change` event fires when any of a set of given property value have changed, and is registered for as follows:
+Whereas a class using the second approach would look like this:
 
 ```js
-model.props(p('prop1'), p('prop2')).on('change', function(node) {
-  // ...
-});
+function MyModel() {
+  composerjs.mixinTo(this);
+  this.addHandler(summationHandler);
+  this.seal();
+}
 ```
 
-and, in much the same way, can be used to register for node-list properties like this:
-
-```js
-model.nodes.props(p('prop1'), p('prop2')).on('change', function(node) {
-  // ...
-});
-```
-
-
-### Mutation Event
-
-The `mutation` event fires if nodes are either added or removed from a node-list, and is registered for as follows:
-
-```js
-model.nodes.on('mutation', function(nodes) {
-  // ...
-});
-```
-
-Here, `nodes` is the array of nodes after the change.
-
-
-### Before-Change Event
-
-The `beforechange` event fires prior to the `change` and `mutation` events firing. It is useful since if `set()`, `addNode()` or `removeNode()` are invoked at this the point, the `change` and `mutation` events won't fire until the handlers have first had a chance to react to any changes.
-
-This event can be registered for as follows:
-
-```js
-model.on('beforechange', function(model) {
-  // ...
-});
-```
-
-where `model` is the root model node.
-
-
-## Serialization
-
-Model state can be exported as JSON using the `export()` method, for example:
-
-```js
-var json = model.export([p('prop'), p('nodes/child-prop')]);
-```
-
-or if all properties are required, then simply:
-
-```js
-var json = model.export();
-```
-
-and re-imported using the `set()` method, for example:
-
-```js
-model.set(json);
-```
-
-JSON blobs are useful because they can be used to satisfy a number of requirements:
-
-1. They allow models to easily be debugged (e.g. `console.log(model.export())`).
-2. They allow model state to be traversed and introspected (e.g. `for(key in model.export() {...}`).
-3. They still allow models to be serialized (e.g. `JSON.stringify(model.export())`).
-
-When used for serialization/deserialization you should ensure that any default values are _set_ before the serialized state is _set_.
-
-
-## Genuine Circular Dependencies
-
-ComposerJs doesn't allow handlers that form circular dependencies, yet there are occasions when this is actually required. In such cases, the `beforechange` event can be used to create a circular dependency, but where the listener is responsible for ensuring that infinite loops don't occur.
-
-For example:
-
-```js
-model.on('beforechange', function(model) {
-  var startProperty = model.get('end-prop1') + model.get('end-prop2');
-
-  if(startProperty != model.get('start-prop')) {
-    model.set('start-prop', startProperty);
-  }
-});
-```
-
-
-## Recursion
-
-Nodes can be used to define recursive data structures with the help of the `defineAs()` method. For example, a tree of nodes could be defined like this:
-
-```js
-node.addDisabledNode('leaf1');
-node.addDisabledNode('leaf2');
-node.leaf1.defineAs(node);
-node.leaf2.defineAs(node);
-```
-
-After sealing, we could create a small tree of actual nodes using code similar to this:
-
-```js
-node.leaf1.create();
-node.leaf1.leaf1.create();
-node.leaf1.leaf2.create();
-```
-
-Finally, we could require that each node has a `value` property unique to it, and a `sum` property containing the sum of all values beneath it in the tree, for example:
-
-```js
-node.addNode('leaf1');
-node.addNode('leaf2');
-node.define('value', 1);
-node.addHandler([p('leaf1.value').as('value1'), p('leaf2.value').as('value2')], ['sum'], function(input, output, current, modified) {
-  output.sum = (input.value1 || 0) + (input.value2 || 0);
-});
-node.leaf1.defineAs(node);
-node.leaf2.defineAs(node);
-```
-
-Notice here how the handler has guard to against `input.value1` and `input.value2`, both or either of which may be `null`.
