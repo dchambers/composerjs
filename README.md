@@ -150,6 +150,34 @@ This is how each map works:
   * `modified` contains any of the _output-properties_ that have also been provided using `set()`.
 
 
+## Developing Within A Class
+
+Rather than developing your model in ad-hoc fashion, you will typically develop your model within a class, in which case you have two options as to how you create the composable model:
+
+1. `composer.create()`, when you want to keep methods like `set()` as private facets of the model you are building.
+2. `composer.mixinTo()`, when you are happy to expose methods like `set()`.
+
+A class using the first approach might look like this:
+
+```js
+function MyModel() {
+	this._model = composerjs.create();
+	this._model.addHandler(summationHandler);
+	this._model.seal();
+}
+```
+
+Whereas a class using the second approach would look like this:
+
+```js
+function MyModel() {
+	composerjs.mixinTo(this);
+	this.addHandler(summationHandler);
+	this.seal();
+}
+```
+
+
 ## Tree Shaped Models
 
 Tree shaped models can be created using the `addNode()` and `addNodeList()` methods.
@@ -710,30 +738,3 @@ props(handler.inputs).relativeTo(model).for('only-this-property');
 props(handler.outputs).relativeTo(model).excluding('not-this-property');
 ```
 
-
-## Developing Within A Class
-
-Rather than developing your model in ad-hoc fashion, you will typically develop your model within a class, in which case you have two options as to how you create the composable model:
-
-1. `composer.create()`, when you want to keep methods like `set()` as private facets of the model you are building.
-2. `composer.mixinTo()`, when you are happy to expose methods like `set()`.
-
-A class using the first approach might look like this:
-
-```js
-function MyModel() {
-	this._model = composerjs.create();
-	this._model.addHandler(summationHandler);
-	this._model.seal();
-}
-```
-
-Whereas a class using the second approach would look like this:
-
-```js
-function MyModel() {
-	composerjs.mixinTo(this);
-	this.addHandler(summationHandler);
-	this.seal();
-}
-```
