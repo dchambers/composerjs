@@ -659,14 +659,8 @@ p('prop1').as('x') -> {
 	as: 'x'
 }
 
-p('../prop1').as('x') -> {
-	path: ['..'],
-	name: 'prop1',
-	as: 'x'
-}
-
-p('nodes/child/prop1').as('x') -> {
-	path: ['nodes', 'child'],
+p('../nodes/child/prop1').as('x') -> {
+  path: ['..', 'nodes', 'child'],
 	name: 'prop1',
 	as: 'x'
 }
@@ -737,4 +731,3 @@ If you don't want all of the properties to be relative to the given node, you ca
 props(handler.inputs).relativeTo(model).for('only-this-property');
 props(handler.outputs).relativeTo(model).excluding('not-this-property');
 ```
-
