@@ -263,9 +263,23 @@ model.addHandler([p('nodes/name').asList().as('names')], ['allNames'],
 ```
 
 
-## Recursion
+## Referential Data Structures
 
-Nodes can be used to define recursive data structures with the help of the `defineAs()` method, which allows a node to inherit the non-handler defined properties, handlers, sub-nodes and node-lists of some other node. For example, a tree of nodes could be defined like this:
+The `defineAs()` method allows a node to inherit the non-handler defined properties, handlers, sub-nodes and node-lists of some other node, for example:
+
+```js
+model.books.createNode('author');
+model.books.author.addHandler(authorBioHandler);
+model.essays.createNode('author');
+model.essays.author.defineAs(model.books.author);
+```
+
+allows the `author` node created for `books` to also be used for `essays`.
+
+
+## Self Referential Data Structures
+
+The `defineAs()` method can also be used to create self-referential data structures, like trees and linked-lists. For example, the following code describes a tree data structure, where each node can have up to two leaf nodes:
 
 ```js
 node.define('value', 1);
@@ -275,7 +289,9 @@ node.leaf1.defineAs(node);
 node.leaf2.defineAs(node);
 ```
 
-After sealing, we could create a small node tree using code like this:
+Notice how `addDisabledNode()` is used instead of `addNode()`, since otherwise new leaf nodes would indefinitely be added to the tree until the call-stack overflowed or all the memory was consumed.
+
+After sealing, we can create a small node tree like this:
 
 ```js
 node.leaf1.create();
@@ -296,7 +312,7 @@ node.addHandler([p('leaf1.value').as('p1'), p('leaf2.value').as('p2')], ['sum'],
 
 then each node would now contain a sum of the values for all nodes beneath it.
 
-Notice here how the handler has to guard to against `input.p1` and `input.p2`, both or either of which may be `null` if the leaf nodes have not been created.
+Notice how the handler has to guard to against `input.p1` and/or `input.p2` being `null`, since nodes may not have any leaf nodes.
 
 
 ## Specialized Types
@@ -721,4 +737,3 @@ function MyModel() {
 	this.seal();
 }
 ```
-
