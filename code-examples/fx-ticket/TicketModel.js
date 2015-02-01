@@ -14,8 +14,7 @@ function TicketModel(currencyPair) {
   this.addHandler(currencyHandler);
   this.addHandler(dealtCurrencyHandler);
 
-  this.addNodeList('legs');
-  this.legs.define('amount', 1);
+  this.addNodeList('legs', {amount: 1});
   this.legs.addHandler(multiLegTenorHandler);
   this.legs.addHandlerConstructor(
     this.legs.props(RateHandler.inputs).relativeTo('..').for('currencyPair'),

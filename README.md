@@ -209,6 +209,12 @@ model.node.define('some-prop', 'some-value');
 
 Notice how in the handler example above, the properties can optionally come from remote parts of the model.
 
+As a short-cut, you can define any properties at the point you create a node by passing a map, like this:
+
+```js
+model.addNode('node', {'some-prop': 'some-value'});
+```
+
 
 #### Interacting With Nodes
 
