@@ -2,8 +2,6 @@
 
 var p = require('composerjs').p;
 
-// TODO: add support for broken tenors provided as ISO date strings (will require a 'businessDate'
-// input-property since the tenor days for broken tenors will tick as 'businessDate' changes)
 function multiLegTenorHandler(input, output, current, modified) {
   verifyTenors(modified.squash());
 
