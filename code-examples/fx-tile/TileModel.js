@@ -1,7 +1,7 @@
 'use strict';
 
 var composerjs = require('composerjs');
-var currencyHandler = require('../currency-handler/currencyHandler');
+var baseTermCurrencyHandler = require('../currency-handler/baseTermCurrencyHandler');
 var dealtCurrencyHandler = require('../currency-handler/dealtCurrencyHandler');
 var RateHandler = require('../rate-handler/RateHandler');
 
@@ -11,7 +11,7 @@ function TileModel(currencyPair) {
   this.define('tenor', 0);
   this.define('amount', 1);
   this.define('currencyPair', currencyPair);
-  this.addHandler(currencyHandler);
+  this.addHandler(baseTermCurrencyHandler);
   this.addHandler(dealtCurrencyHandler);
   this.addHandlerConstructor(RateHandler.inputs,
     this.props(RateHandler.outputs).prefixedWith('bid'), RateHandler.bind(null, 'bid'));

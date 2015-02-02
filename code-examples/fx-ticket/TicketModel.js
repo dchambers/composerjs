@@ -1,7 +1,7 @@
 'use strict';
 
 var composerjs = require('composerjs');
-var currencyHandler = require('../currency-handler/currencyHandler');
+var baseTermCurrencyHandler = require('../currency-handler/baseTermCurrencyHandler');
 var dealtCurrencyHandler = require('../currency-handler/dealtCurrencyHandler');
 var multiLegTenorHandler = require('../tenor-handler/multiLegTenorHandler');
 var RateHandler = require('../rate-handler/RateHandler');
@@ -11,7 +11,7 @@ function TicketModel(currencyPair) {
   this.define('useBaseCurrency', true);
   this.define('type', 'outright');
   this.define('currencyPair', currencyPair);
-  this.addHandler(currencyHandler);
+  this.addHandler(baseTermCurrencyHandler);
   this.addHandler(dealtCurrencyHandler);
 
   this.addNodeList('legs', {amount: 1});
