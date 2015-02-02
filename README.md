@@ -310,6 +310,8 @@ model.essays.author.defineAs(model.books.author);
 
 allows the `author` node created for `books` to also be used for `essays`.
 
+Note that `defineAs()` can't be used to _extend_ a node, so you can't invoke `defineAs()` on a node that you've already invoked `define()` or `addHandler()` on, and similarly you can't invoke `define()` or `addHandler()` on a node that you've already invoked `defineAs()` on.
+
 
 ## Self Referential Data Structures
 
