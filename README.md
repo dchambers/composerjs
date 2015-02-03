@@ -244,18 +244,18 @@ Node-lists have a number of useful methods that can be used after `seal()` has b
 
 Node-List handler functions look exactly the same as normal handler functions, but are invoked once for each node within the node-list, which allows the same handlers used with nodes to also be used for the nodes within node-lists, where this makes sense.
 
-However, some output-properties can only be created if the handler is free to contemplate the entire set of properties at the same time. Handlers that are required to work this way can use the `asList()` method to indicate any properties that need to be written simultaneously, for example:
+However, some output-properties can only be created if the handler is free to contemplate the entire set of properties at the same time. Handlers that are required to work this way can use dotted property names to indicate any properties that should be made available as a list, for example:
 
 ```js
 function handler(input, output, current, modified) {
 	output.x = true;
-	for(var out of output) {
-		out.y = true;
+	for(var node of output.nodes) {
+		node.y = true;
 	}
 }
 
 handler.inputs = [];
-handler.outputs = ['x', p('y').asList()];
+handler.outputs = ['x', 'nodes.y'];
 ```
 
 in which case `output`, `current` & `modified` will all be arrays.
@@ -269,7 +269,7 @@ There are a number of subtleties to how handlers that have output-based list-pro
 
 #### Node List Input Properties
 
-Handlers are also free to use `asList()` to specify which of their input-properties must be arrays. However, unlike with output-properties, models are free to map these properties to _foriegn-nodes_ if they please, for example:
+Handlers are also free to use dotted properties to specify which of their input-properties must be made available as lists. However, unlike with output-properties, models are free to map these properties to _foriegn-nodes_ if they please, for example:
 
 ```js
 node.addHandler([p('../nodes/prop')], ['out'], handler);
@@ -278,9 +278,9 @@ node.addHandler([p('../nodes/prop')], ['out'], handler);
 Input properties also differ in that `input` is never an array of maps; instead, any list-properties are made available as an array within the one map, for example:
 
 ```js
-model.addHandler([p('nodes/name').asList().as('names')], ['allNames'],
-	function(input, output, current, modified) {
-		output.allNames = input.names.join(', ');
+model.addHandler(['nodes.name'], ['allNames'],
+	function(input, output) {
+		output.allNames = input.nodes.map(node => node.name).join(', ');
 	}
 );
 ```

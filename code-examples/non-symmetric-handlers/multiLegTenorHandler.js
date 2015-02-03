@@ -2,15 +2,15 @@
 
 var p = require('composerjs').p;
 
-function multiLegTenorHandler(input, output, current, modified) {
-  verifyTenors(modified.squash());
+function multiLegTenorHandler(input, output, currentInput, currentOutput) {
+  verifyTenors(input.squash());
 
-  var firstModifiedTenor = (modified.squash().length == 0) ? null : modified.squash()[0];
+  var firstModifiedTenor = (input.squash().length == 0) ? null : input.squash()[0];
   var prevValidTenor;
 
-  for(var tenorIndex of modified) {
-    var modifiedTenor = modified[tenorIndex].tenor;
-    var currentTenor = current[tenorIndex].tenor;
+  for(var tenorIndex of input) {
+    var modifiedTenor = input[tenorIndex].tenor;
+    var currentTenor = currentOutput[tenorIndex].tenor;
 
     if(currentTenor === undefined) {
       currentTenor = 0;
@@ -31,8 +31,8 @@ function multiLegTenorHandler(input, output, current, modified) {
   }
 }
 
-multiLegTenorHandler.inputs = [];
-multiLegTenorHandler.outputs = [p('tenor').asList()];
+multiLegTenorHandler.inputs = ['legs.inputTenor'];
+multiLegTenorHandler.outputs = ['legs.tenor'];
 
 function verifyTenors(tenors) {
   var prevTenor;
