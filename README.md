@@ -110,7 +110,9 @@ and, conversely, can be set using the `set()` method, as follows:
 model.set('answer', 42);
 ```
 
-and model observation is supported using the emitter pattern, for example:
+but where the `set()` method can only be used for properties that were _defined_, and not for properties provided by handlers.
+
+Finally, model observation is supported using the emitter pattern, for example:
 
 ```js
 model.props(['question', 'answer']).on('change', function(value) {
