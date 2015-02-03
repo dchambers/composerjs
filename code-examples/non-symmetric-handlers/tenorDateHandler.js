@@ -1,14 +1,14 @@
 'use strict';
 
-function mixedDateTenorHandler(input, output, current, modified) {
-	if(typeof(input.mixedTenor) == 'number') {
-		output.tenor = input.mixedTenor;
+function tenorDateHandler(input, output, current, modified) {
+	if(typeof(input.tenorDate) == 'number') {
+		output.tenor = input.tenorDate;
 	}
 	else {
 		var nextTenor = 0;
 
 		for(var businessDay of businessDays(input.businessDate, input.buisinessDays, input.businessHolidays)) {
-			if(businessDay == input.mixedTenor) {
+			if(businessDay == input.tenorDate) {
 				output.tenor = nextTenor;
 			}
 
@@ -17,12 +17,12 @@ function mixedDateTenorHandler(input, output, current, modified) {
 	}
 }
 
-mixedDateTenorHandler.inputs = ['mixedTenor', 'businessDate', 'buisinessDays', 'businessHolidays'];
-mixedDateTenorHandler.outputs = ['tenor'];
+tenorDateHandler.inputs = ['tenorDate', 'businessDate', 'buisinessDays', 'businessHolidays'];
+tenorDateHandler.outputs = ['tenor'];
 
 function* businessDays(businessDate, buisinessDays, businessHolidays) {
 	// Note: the implementation for this would tick forward through the days starting from `businessDate` while
 	// yielding all dates that are a valid day of the week ('buisinessDays') and not a holiday ('businessHolidays').
 }
 
-modules.exports = mixedDateTenorHandler;
+modules.exports = tenorDateHandler;
