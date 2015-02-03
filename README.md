@@ -23,7 +23,7 @@ var model = composerjs.create();
 after which you can add handlers to the model, such as the following summation handler:
 
 ```js
-model.addHandler(['p1', 'p2'], ['sum'], function(input, output, current, modified) {
+model.addHandler(['p1', 'p2'], ['sum'], function(input, output) {
 	output.sum = input.p1 + input.p2;
 });
 ```
@@ -34,7 +34,7 @@ where the first two arguments are used to provide the set of input and output pr
 For example, if our summation handler is defined like this:
 
 ```js
-function summationHandler(input, output, current, modified) {
+function summationHandler(input, output) {
 	output.sum = input.x + input.y;
 }
 summationHandler.inputs = ['x', 'y'];
@@ -124,19 +124,19 @@ model.props(['question', 'answer']).on('change', function(value) {
 Handler functions look like this:
 
 ```js
-function(input, output, current, modified) {
+function(input, output, currentInput, currentOutput) {
 	// ...
 }
 ```
 
-where `input`, `output`, `current` & `modified` are all maps of properties. The `input` map contains the set of all _input-properties_, and the `output`, `current` & `modified` maps contain the set of all _output-properties_.
+where `input`, `output`, `currentInput` and `currentOutput` are all maps of properties.
 
 This is how each map works:
 
   * `input` contains every property required by the handler.
   * `output` starts off empty, and must be populated by the handler.
-  * `current` contains the `output` map produced by the handler the last time it was invoked, or an empty map if this is the initial invocation.
-  * `modified` contains any of the _output-properties_ that have also been provided using `set()`.
+  * `currentInput` contains the `input` map produced by the handler the last time it was invoked, or an empty map if this is the initial invocation.
+  * `currentOutput` contains the `output` map produced by the handler the last time it was invoked, or an empty map if this is the initial invocation.
 
 
 ## Developing Within A Class
@@ -184,7 +184,7 @@ which causes the new model node to be immediately accessible as `model.node`, al
 
 ```js
 model.node.addHandler(p('../p1').as('x'), p('../p2').as('y')], ['product'],
-	function(input, output, current, modified) {
+	function(input, output) {
 		output.product = input.x * input.y;
 	}
 );
@@ -222,7 +222,7 @@ Quite often, models have multiple nodes with exactly the same shape, but where t
 
 ```js
 model.addNodeList('nodes');
-model.nodes.addHandler([], ['name'], function(input, output, current, modified) {
+model.nodes.addHandler([], ['name'], function(input, output) {
 	output.name = 'node #' + (index + 1);
 });
 ```
@@ -240,50 +240,52 @@ Node-lists have a number of useful methods that can be used after `seal()` has b
   * `removeNode(index)` (remove the node at the given `index`, or the last node if no index is provided)
 
 
-#### Node List Handlers
+#### Node Lists  & Handlers
 
-Node-List handler functions look exactly the same as normal handler functions, but are invoked once for each node within the node-list, which allows the same handlers used with nodes to also be used for the nodes within node-lists, where this makes sense.
-
-However, some output-properties can only be created if the handler is free to contemplate the entire set of properties at the same time. Handlers that are required to work this way can use dotted property names to indicate any properties that should be made available as a list, for example:
+Handler functions can refer to local node-list properties &mdash; properties on the node-list to which the handler has been added &mdash; in exactly the same way they refer to node properties, but where the handler will be invoked once per node within the node-list, for example:
 
 ```js
-function handler(input, output, current, modified) {
-	output.x = true;
-	for(var node of output.nodes) {
-		node.y = true;
-	}
+nodes.addHandler(['x', 'y'], ['sum'], function(input, output) {
+  output.sum = input.x + input.y;
+});
+```
+
+In this way, the same handlers used with nodes can also be used with node-lists, where this makes sense.
+
+However, handlers can sometimes only function correctly when they are able to contemplate an entire set of properties at the same time, in which case _dotted-property-notation_ can be used, for example:
+
+```js
+nodes.addHandler(['list.x'], ['sum'], function(input, output) {
+  output.sum = input.list.reduce((total, node) => node.x + total, 0);
+});
+```
+
+Here, each element of `list` is a map containing any properties prefixed with `list.`, which in this case is just `list.x`.
+
+Handlers are free to mix and match their use of dotted and un-dotted properties, for example:
+
+```js
+function handler(input, output) {
+  output.x = true;
+  for(var node of output.nodes) {
+    node.y = true;
+  }
 }
 
 handler.inputs = [];
 handler.outputs = ['x', 'nodes.y'];
 ```
 
-in which case `output`, `current` & `modified` will all be arrays.
 
-There are a number of subtleties to how handlers that have output-based list-properties can be used:
+#### Dotted Property Notation Usage Rules
 
-  1. Such handlers can only be added to node-lists.
-  1. Any _list-properties_ within the handler must be mapped to the node on which the handler was registered, and can not be mapped to _foreign-properties_.
-  1. Handlers can have both list properties and normal properties, but any normal properties must be mapped to regular nodes, and not node-lists.
+Here's the definitive set of usage rules regarding the use of dotted properties:
 
-
-#### Node List Input Properties
-
-Handlers are also free to use dotted properties to specify which of their input-properties must be made available as lists. However, unlike with output-properties, models are free to map these properties to _foriegn-nodes_ if they please, for example:
-
-```js
-node.addHandler([p('../nodes/prop')], ['out'], handler);
-```
-
-Input properties also differ in that `input` is never an array of maps; instead, any list-properties are made available as an array within the one map, for example:
-
-```js
-model.addHandler(['nodes.name'], ['allNames'],
-	function(input, output) {
-		output.allNames = input.nodes.map(node => node.name).join(', ');
-	}
-);
-```
+  * Dotted property notation must be used to refer to _foreign-properties_ on node-lists.
+  * Dotted property notation can optionally be used to refer to _local-properties_ on node-lists, where otherwise the handler will be invoked once for each item within the node-list.
+  * Dotted properties can be mapped to regular node properties, which causes a list with one item to be created.
+  * Dotted properties can have some of their values mapped to node-lists and others mapped to nodes, in which case the properties not mapped to a node-list are duplicated within each item of the resultant list.
+  * Dotted properties can be mapped to more than node-list provided the node-lists all have the same number of properties.
 
 
 ## Referential Data Structures
@@ -329,7 +331,7 @@ Now, assuming we'd added the following handler to `node` before referring to it 
 
 ```js
 node.addHandler([p('leaf1.value').as('p1'), p('leaf2.value').as('p2')], ['sum'],
-	function(input, output, current, modified) {
+	function(input, output) {
 		output.sum = (input.p1 || 0) + (input.p2 || 0);
 	}
 );
@@ -447,7 +449,7 @@ function MessageCountHandler(startCount) {
 MessageCountHandler.inputs = ['message'];
 MessageCountHandler.outputs = ['messageCount'];
 
-MessageCountHandler.prototype.handler = function(input, output, current, modified) {
+MessageCountHandler.prototype.handler = function(input, output) {
 	output.messageCount = this._messageCount++;
 };
 
@@ -479,7 +481,7 @@ function WebSocketHandler(server) {
 WebSocketHandler.inputs = [];
 WebSocketHandler.outputs = ['data'];
 
-WebSocketHandler.prototype.handler = function(input, output, current, modified) {
+WebSocketHandler.prototype.handler = function(input, output) {
 	output.data = null;
 
 	this._connection.onmessage = function(event) {
