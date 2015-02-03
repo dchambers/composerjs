@@ -96,17 +96,6 @@ model.seal();
 ```
 
 
-## Multiplexing
-
-Although the `seal()` method ensures that _output-properties_ have been provided by at most one handler, this is not always desirable, in which case the `allowMultiplexing()` method can be invoked prior to `seal()` to loosen this restriction, as follows:
-
-```js
-node.allowMultiplexing('sum');
-```
-
-This allows handlers to co-operatively provide a single property, typically with only one handler electing to provide the value at any time. If two handlers do elect to provide the same property at the same time, then the values they provide must be the same or an error will be thrown.
-
-
 ## Model Usage
 
 The current value of a property within the model can be retrieved using the `get()` method, for example:
