@@ -531,7 +531,7 @@ ComposerJs emits the following events, all of which can be registered for using 
 
   * `change`
   * `mutation`
-  * `beforechange`
+  * `beforenotify`
 
 
 ### Change Event
@@ -566,14 +566,14 @@ model.nodes.on('mutation', function(nodes) {
 Here, `nodes` is the array of nodes after the change.
 
 
-### Before-Change Event
+### Before-Notify Event
 
-The `beforechange` event fires prior to the `change` and `mutation` events firing. It is useful since if `set()`, `addNode()` or `removeNode()` are invoked at this the point, the `change` and `mutation` events won't fire until the handlers have first had a chance to react to any changes.
+The `beforenotify` event fires prior to the `change` and `mutation` events firing. It is useful since if `set()`, `addNode()` or `removeNode()` are invoked at this the point, the `change` and `mutation` events won't fire until the handlers have first had a chance to react to any changes.
 
 This event can be registered for as follows:
 
 ```js
-model.on('beforechange', function(model) {
+model.on('beforenotify', function(model) {
 	// ...
 });
 ```
@@ -583,12 +583,12 @@ where `model` is the root model node.
 
 ## Genuine Circular Dependencies
 
-ComposerJs doesn't allow handlers that form circular dependencies, yet there are occasions when this is actually required. In such cases, the `beforechange` event can be used to create a circular dependency, but where the listener is responsible for ensuring that infinite loops don't occur.
+ComposerJs doesn't allow handlers that form circular dependencies, yet there are occasions when this is actually required. In such cases, the `beforenotify` event can be used to create a circular dependency, but where the listener is responsible for ensuring that infinite loops don't occur.
 
 For example:
 
 ```js
-model.on('beforechange', function(model) {
+model.on('beforenotify', function(model) {
 	var startProperty = model.get('end-prop1') + model.get('end-prop2');
 
 	if(startProperty != model.get('start-prop')) {
